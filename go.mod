@@ -1,4 +1,4 @@
-module github.com/slatermorgan/lambda-handlers
+module github.com/itsoneiota/lambda-handlers
 
 go 1.18
 

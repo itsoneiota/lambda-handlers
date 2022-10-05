@@ -5,12 +5,12 @@ import (
 	"net/http"
 
 	muxRouter "github.com/gorilla/mux"
+	"github.com/itsoneiota/lambda-handlers/internal/mocks"
+	"github.com/itsoneiota/lambda-handlers/pkg/aws"
+	"github.com/itsoneiota/lambda-handlers/pkg/example"
+	"github.com/itsoneiota/lambda-handlers/pkg/handler"
+	"github.com/itsoneiota/lambda-handlers/pkg/mux"
 	"github.com/sirupsen/logrus/hooks/test"
-	"github.com/slatermorgan/lambda-handlers/internal/mocks"
-	"github.com/slatermorgan/lambda-handlers/pkg/aws"
-	"github.com/slatermorgan/lambda-handlers/pkg/example"
-	"github.com/slatermorgan/lambda-handlers/pkg/handler"
-	"github.com/slatermorgan/lambda-handlers/pkg/mux"
 )
 
 func main() {
