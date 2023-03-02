@@ -22,7 +22,7 @@ func NewResponseHandler(
 }
 
 // Body gets request payload
-func (r *ResponseHandler) BuildResponse(code int, model interface{}) (*Response, error) {
+func (r *ResponseHandler) BuildResponse(code int, model interface{}, headers map[string]string) (*Response, error) {
 	body := ""
 	if model != nil {
 		bodyBytes, err := json.Marshal(model)
@@ -33,20 +33,25 @@ func (r *ResponseHandler) BuildResponse(code int, model interface{}) (*Response,
 		body = string(bodyBytes)
 	}
 
-	return r.BuildResponder(code, body)
+	return r.BuildResponder(code, body, headers)
 }
 
 // BuildRawJSONResponse builds an Response with the given status code & response body
 // The Response will contain the raw response body and appropriate JSON header
-func (r *ResponseHandler) BuildResponder(code int, body string) (*Response, error) {
+func (r *ResponseHandler) BuildResponder(code int, body string, headers map[string]string) (*Response, error) {
+	h := r.defaultHeaders
+	for k, v := range headers {
+		h[k] = v
+	}
+
 	return &Response{
 		StatusCode: code,
 		Body:       body,
-		Headers:    r.defaultHeaders,
+		Headers:    h,
 	}, nil
 }
 
-func (r *ResponseHandler) BuildErrorResponse(err error) (*Response, error) {
+func (r *ResponseHandler) BuildErrorResponse(err error, headers map[string]string) (*Response, error) {
 	statusCode := http.StatusInternalServerError
 	var serviceErr error
 
@@ -71,7 +76,7 @@ func (r *ResponseHandler) BuildErrorResponse(err error) (*Response, error) {
 		r.logger.Error(err)
 	}
 
-	return r.BuildResponse(statusCode, serviceErr)
+	return r.BuildResponse(statusCode, serviceErr, headers)
 }
 
 func isServiceError(err error) (bool, int) {

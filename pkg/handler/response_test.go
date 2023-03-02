@@ -22,7 +22,7 @@ func TestBuildResponder(t *testing.T) {
 
 	hand := NewResponseHandler(l, heads)
 
-	res, err := hand.BuildResponder(code, body)
+	res, err := hand.BuildResponder(code, body, nil)
 
 	assert.NoError(t, err)
 	assert.IsType(t, (*Response)(nil), res)
@@ -38,7 +38,7 @@ func TestBuildResponse_Empty(t *testing.T) {
 
 	hand := NewResponseHandler(l, heads)
 
-	res, err := hand.BuildResponse(code, nil)
+	res, err := hand.BuildResponse(code, nil, nil)
 
 	assert.NoError(t, err)
 	assert.IsType(t, (*Response)(nil), res)
@@ -58,7 +58,7 @@ func TestBuildResponse(t *testing.T) {
 
 	hand := NewResponseHandler(l, heads)
 
-	res, err := hand.BuildResponse(code, model)
+	res, err := hand.BuildResponse(code, model, nil)
 
 	assert.NoError(t, err)
 	assert.IsType(t, (*Response)(nil), res)

@@ -31,28 +31,28 @@ func FindHandler(
 	return func(request handler.Requester) (*handler.Response, error) {
 		if beforeHook != nil {
 			if err := beforeHook(request); err != nil {
-				return resHander.BuildErrorResponse(err)
+				return resHander.BuildErrorResponse(err, nil)
 			}
 		}
 
 		token := request.GetAuthToken()
 		if err := connector.Authorize(token); err != nil {
-			return resHander.BuildErrorResponse(err)
+			return resHander.BuildErrorResponse(err, nil)
 		}
 
 		postcode := request.QueryByName("postcode")
 
 		addresses, err := connector.Find(postcode)
 		if err != nil {
-			return resHander.BuildErrorResponse(err)
+			return resHander.BuildErrorResponse(err, nil)
 		}
 
 		if afterHook != nil {
 			if err := afterHook(addresses); err != nil {
-				return resHander.BuildErrorResponse(err)
+				return resHander.BuildErrorResponse(err, nil)
 			}
 		}
 
-		return resHander.BuildResponse(http.StatusOK, addresses)
+		return resHander.BuildResponse(http.StatusOK, addresses, nil)
 	}
 }
