@@ -3,7 +3,7 @@ package handler
 import (
 	"testing"
 
-	"github.com/slatermorgan/lambda-handlers/pkg/handler/mocks"
+	"github.com/itsoneiota/lambda-handlers/pkg/handler/mocks"
 	"github.com/stretchr/testify/assert"
 )
 
