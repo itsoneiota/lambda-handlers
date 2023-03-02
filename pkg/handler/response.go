@@ -41,7 +41,9 @@ func (r *ResponseHandler) BuildResponse(code int, model interface{}, headers htt
 func (r *ResponseHandler) BuildResponder(code int, body string, headers http.Header) (*Response, error) {
 	h := r.defaultHeaders
 	for k, v := range headers {
-		h.Set(k, v[0])
+		if len(v) > 0 {
+			h.Set(k, v[0])
+		}
 	}
 
 	return &Response{
