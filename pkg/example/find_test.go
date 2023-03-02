@@ -45,7 +45,7 @@ func TestFind_AWS(t *testing.T) {
 	).Times(1)
 
 	logger, _ := test.NewNullLogger()
-	headers := &http.Header{}
+	headers := http.Header{}
 	headers.Set("Content-Type", "application/json")
 
 	resHander := handler.NewResponseHandler(

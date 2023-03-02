@@ -19,7 +19,7 @@ func newResponse(code int, body string) {
 // Genertic Response object which is used in every handler
 type Response struct {
 	StatusCode int
-	Headers    *http.Header
+	Headers    http.Header
 	Body       string
 }
 

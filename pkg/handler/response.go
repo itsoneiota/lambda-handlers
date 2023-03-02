@@ -7,18 +7,14 @@ import (
 
 // Genertic Handler object which is the reciever in every handler method
 type ResponseHandler struct {
-	defaultHeaders *http.Header
+	defaultHeaders http.Header
 	logger         Logger
 }
 
 func NewResponseHandler(
 	logger Logger,
-	defaultHeads *http.Header,
+	defaultHeads http.Header,
 ) *ResponseHandler {
-	if defaultHeads == nil {
-		defaultHeads = &http.Header{}
-	}
-
 	return &ResponseHandler{
 		logger:         logger,
 		defaultHeaders: defaultHeads,
@@ -26,7 +22,7 @@ func NewResponseHandler(
 }
 
 // Body gets request payload
-func (r *ResponseHandler) BuildResponse(code int, model interface{}, headers *http.Header) (*Response, error) {
+func (r *ResponseHandler) BuildResponse(code int, model interface{}, headers http.Header) (*Response, error) {
 	body := ""
 	if model != nil {
 		bodyBytes, err := json.Marshal(model)
@@ -42,12 +38,10 @@ func (r *ResponseHandler) BuildResponse(code int, model interface{}, headers *ht
 
 // BuildRawJSONResponse builds an Response with the given status code & response body
 // The Response will contain the raw response body and appropriate JSON header
-func (r *ResponseHandler) BuildResponder(code int, body string, headers *http.Header) (*Response, error) {
+func (r *ResponseHandler) BuildResponder(code int, body string, headers http.Header) (*Response, error) {
 	h := r.defaultHeaders
-	if headers != nil {
-		for k, v := range *headers {
-			h.Set(k, v[0])
-		}
+	for k, v := range headers {
+		h.Set(k, v[0])
 	}
 
 	return &Response{
@@ -57,7 +51,7 @@ func (r *ResponseHandler) BuildResponder(code int, body string, headers *http.He
 	}, nil
 }
 
-func (r *ResponseHandler) BuildErrorResponse(err error, headers *http.Header) (*Response, error) {
+func (r *ResponseHandler) BuildErrorResponse(err error, headers http.Header) (*Response, error) {
 	statusCode := http.StatusInternalServerError
 	var serviceErr error
 

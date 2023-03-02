@@ -24,7 +24,7 @@ func getHandler(h handler.HandlerFunc) LambdaCallback {
 
 func NewEvent(r *handler.Response) *events.APIGatewayProxyResponse {
 	headers := map[string]string{}
-	for k, v := range *r.Headers {
+	for k, v := range r.Headers {
 		headers[k] = v[0]
 	}
 

@@ -15,7 +15,7 @@ type Model struct {
 func TestBuildResponder(t *testing.T) {
 	body := "model"
 	code := 200
-	headers := &http.Header{}
+	headers := http.Header{}
 	headers.Set("default", "header")
 
 	l := mocks.NewLogger(t)
@@ -30,7 +30,7 @@ func TestBuildResponder(t *testing.T) {
 
 func TestBuildResponse_Empty(t *testing.T) {
 	code := 200
-	headers := &http.Header{}
+	headers := http.Header{}
 	headers.Set("default", "header")
 
 	l := mocks.NewLogger(t)
@@ -49,7 +49,7 @@ func TestBuildResponse(t *testing.T) {
 	}
 
 	code := 200
-	headers := &http.Header{}
+	headers := http.Header{}
 	headers.Set("default", "header")
 
 	l := mocks.NewLogger(t)
