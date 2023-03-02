@@ -1,5 +1,7 @@
 package handler
 
+import "net/http"
+
 // Generic Request object which is used in every handler
 type Requester interface {
 	Body() string
@@ -17,7 +19,7 @@ func newResponse(code int, body string) {
 // Genertic Response object which is used in every handler
 type Response struct {
 	StatusCode int
-	Headers    map[string]string
+	Headers    http.Header
 	Body       string
 }
 

@@ -7,13 +7,13 @@ import (
 
 // Genertic Handler object which is the reciever in every handler method
 type ResponseHandler struct {
-	defaultHeaders map[string]string
+	defaultHeaders http.Header
 	logger         Logger
 }
 
 func NewResponseHandler(
 	logger Logger,
-	defaultHeads map[string]string,
+	defaultHeads http.Header,
 ) *ResponseHandler {
 	return &ResponseHandler{
 		logger:         logger,
@@ -22,7 +22,7 @@ func NewResponseHandler(
 }
 
 // Body gets request payload
-func (r *ResponseHandler) BuildResponse(code int, model interface{}) (*Response, error) {
+func (r *ResponseHandler) BuildResponse(code int, model interface{}, headers http.Header) (*Response, error) {
 	body := ""
 	if model != nil {
 		bodyBytes, err := json.Marshal(model)
@@ -33,20 +33,27 @@ func (r *ResponseHandler) BuildResponse(code int, model interface{}) (*Response,
 		body = string(bodyBytes)
 	}
 
-	return r.BuildResponder(code, body)
+	return r.BuildResponder(code, body, headers)
 }
 
 // BuildRawJSONResponse builds an Response with the given status code & response body
 // The Response will contain the raw response body and appropriate JSON header
-func (r *ResponseHandler) BuildResponder(code int, body string) (*Response, error) {
+func (r *ResponseHandler) BuildResponder(code int, body string, headers http.Header) (*Response, error) {
+	h := r.defaultHeaders
+	for k, v := range headers {
+		if len(v) > 0 {
+			h.Set(k, v[0])
+		}
+	}
+
 	return &Response{
 		StatusCode: code,
 		Body:       body,
-		Headers:    r.defaultHeaders,
+		Headers:    h,
 	}, nil
 }
 
-func (r *ResponseHandler) BuildErrorResponse(err error) (*Response, error) {
+func (r *ResponseHandler) BuildErrorResponse(err error, headers http.Header) (*Response, error) {
 	statusCode := http.StatusInternalServerError
 	var serviceErr error
 
@@ -71,7 +78,7 @@ func (r *ResponseHandler) BuildErrorResponse(err error) (*Response, error) {
 		r.logger.Error(err)
 	}
 
-	return r.BuildResponse(statusCode, serviceErr)
+	return r.BuildResponse(statusCode, serviceErr, headers)
 }
 
 func isServiceError(err error) (bool, int) {

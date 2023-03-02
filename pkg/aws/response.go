@@ -3,7 +3,7 @@ package aws
 import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/slatermorgan/lambda-handlers/pkg/handler"
+	"github.com/itsoneiota/lambda-handlers/pkg/handler"
 )
 
 type LambdaCallback = func(request *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error)
@@ -23,9 +23,16 @@ func getHandler(h handler.HandlerFunc) LambdaCallback {
 }
 
 func NewEvent(r *handler.Response) *events.APIGatewayProxyResponse {
+	headers := map[string]string{}
+	for k, v := range r.Headers {
+		if len(v) > 0 {
+			headers[k] = v[0]
+		}
+	}
+
 	return &events.APIGatewayProxyResponse{
 		StatusCode: r.StatusCode,
-		Headers:    r.Headers,
+		Headers:    headers,
 		Body:       r.Body,
 	}
 }
