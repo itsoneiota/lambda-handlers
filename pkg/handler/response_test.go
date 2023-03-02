@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/itsoneiota/lambda-handlers/pkg/handler/mocks"
@@ -14,13 +15,12 @@ type Model struct {
 func TestBuildResponder(t *testing.T) {
 	body := "model"
 	code := 200
-	heads := map[string]string{
-		"default": "header",
-	}
+	headers := &http.Header{}
+	headers.Set("default", "header")
 
 	l := mocks.NewLogger(t)
 
-	hand := NewResponseHandler(l, heads)
+	hand := NewResponseHandler(l, headers)
 
 	res, err := hand.BuildResponder(code, body, nil)
 
@@ -30,13 +30,12 @@ func TestBuildResponder(t *testing.T) {
 
 func TestBuildResponse_Empty(t *testing.T) {
 	code := 200
-	heads := map[string]string{
-		"default": "header",
-	}
+	headers := &http.Header{}
+	headers.Set("default", "header")
 
 	l := mocks.NewLogger(t)
 
-	hand := NewResponseHandler(l, heads)
+	hand := NewResponseHandler(l, headers)
 
 	res, err := hand.BuildResponse(code, nil, nil)
 
@@ -50,13 +49,12 @@ func TestBuildResponse(t *testing.T) {
 	}
 
 	code := 200
-	heads := map[string]string{
-		"default": "header",
-	}
+	headers := &http.Header{}
+	headers.Set("default", "header")
 
 	l := mocks.NewLogger(t)
 
-	hand := NewResponseHandler(l, heads)
+	hand := NewResponseHandler(l, headers)
 
 	res, err := hand.BuildResponse(code, model, nil)
 

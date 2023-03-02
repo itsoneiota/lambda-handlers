@@ -17,8 +17,8 @@ func CreateHandler(
 }
 
 func WriteResponse(r *handler.Response, w http.ResponseWriter) {
-	for k, v := range r.Headers {
-		w.Header().Add(k, v)
+	for k, v := range *r.Headers {
+		w.Header().Add(k, v[0])
 	}
 
 	w.WriteHeader(r.StatusCode)
