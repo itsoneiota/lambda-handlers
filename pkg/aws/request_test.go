@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -27,12 +28,13 @@ func TestRequestGetters(t *testing.T) {
 	query2Key := "t"
 	query2Val := "red"
 
+	headers := http.Header{}
+	headers.Set(headName, headVal)
+	headers.Set("Authorization", token)
+
 	req := AWSRequest{
-		body: body,
-		headers: map[string]string{
-			headName:        headVal,
-			"Authorization": token,
-		},
+		body:    body,
+		headers: headers,
 		pathParams: map[string]string{
 			pathKey:  pathVal,
 			path2Key: path2Val,
@@ -45,9 +47,9 @@ func TestRequestGetters(t *testing.T) {
 
 	assert.Equal(t, body, req.Body())
 
-	assert.Equal(t, headVal, req.HeaderByName(headName))
+	assert.Equal(t, headVal, req.Headers().Get(headName))
 
-	assert.Equal(t, token, req.HeaderByName("Authorization"))
+	assert.Equal(t, token, req.Headers().Get("Authorization"))
 
 	assert.Equal(t, pathVal, req.PathByName(pathKey))
 
@@ -58,8 +60,8 @@ func TestBody_Empty(t *testing.T) {
 	req := AWSRequest{}
 
 	assert.Equal(t, "", req.Body())
-	assert.Equal(t, "", req.HeaderByName("headName"))
-	assert.Equal(t, "", req.HeaderByName("Authorization"))
+	assert.Equal(t, "", req.Headers().Get("headName"))
+	assert.Equal(t, "", req.Headers().Get("Authorization"))
 	assert.Equal(t, "", req.PathByName("pathKey"))
 	assert.Equal(t, "", req.QueryByName("queryKey"))
 }
@@ -117,6 +119,6 @@ func TestNewAWSRequest(t *testing.T) {
 	// BEFORE
 	assert.Equal(t, body, actual.Body())
 	assert.Equal(t, pathVal, actual.PathByName(pathKey))
-	assert.Equal(t, headVal, actual.HeaderByName(headKey))
+	assert.Equal(t, headVal, actual.Headers().Get(headKey))
 	assert.Equal(t, queryVal, actual.QueryByName(queryKey))
 }

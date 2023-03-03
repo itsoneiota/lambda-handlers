@@ -1,20 +1,29 @@
 package aws
 
-import "github.com/aws/aws-lambda-go/events"
+import (
+	"net/http"
+
+	"github.com/aws/aws-lambda-go/events"
+)
 
 type AWSRequest struct {
 	body        string
 	pathParams  map[string]string
 	queryParams map[string]string
-	headers     map[string]string
+	headers     http.Header
 }
 
 func NewAWSRequest(r *events.APIGatewayProxyRequest) *AWSRequest {
+	headers := http.Header{}
+	for k, v := range r.Headers {
+		headers.Set(k, v)
+	}
+
 	return &AWSRequest{
 		body:        r.Body,
 		pathParams:  r.PathParameters,
 		queryParams: r.QueryStringParameters,
-		headers:     r.Headers,
+		headers:     headers,
 	}
 }
 
@@ -24,8 +33,8 @@ func (r *AWSRequest) Body() string {
 }
 
 // HeaderByName gets a header by its name eg. "content-type"
-func (r *AWSRequest) HeaderByName(name string) string {
-	return r.headers[name]
+func (r *AWSRequest) Headers() http.Header {
+	return r.headers
 }
 
 // PathByName gets a path parameter by its name eg. "productID"
@@ -46,9 +55,9 @@ func (r *AWSRequest) SetQueryByName(name, set string) {
 
 // PathByName gets a query parameter by its name eg. "locale"
 func (r *AWSRequest) GetAuthToken() string {
-	if r.HeaderByName("Authorization") != "" {
-		return r.HeaderByName("Authorization")
+	if r.Headers().Get("Authorization") != "" {
+		return r.Headers().Get("Authorization")
 	} else {
-		return r.HeaderByName("authorization")
+		return r.Headers().Get("authorization")
 	}
 }

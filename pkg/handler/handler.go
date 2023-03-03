@@ -5,7 +5,7 @@ import "net/http"
 // Generic Request object which is used in every handler
 type Requester interface {
 	Body() string
-	HeaderByName(name string) string
+	Headers() http.Header
 	PathByName(name string) string
 	QueryByName(name string) string
 	SetQueryByName(name, set string)
