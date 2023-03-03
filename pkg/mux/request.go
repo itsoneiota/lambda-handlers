@@ -26,10 +26,8 @@ func (r *Request) Body() string {
 }
 
 // HeaderByName gets a header by its name eg. "content-type"
-func (r *Request) HeaderByName(name string) string {
-	head := r.request.Header
-
-	return head.Get(name)
+func (r *Request) Headers() http.Header {
+	return r.request.Header
 }
 
 // PathByName gets a path parameter by its name eg. "productID"
@@ -54,9 +52,9 @@ func (r *Request) SetQueryByName(name, set string) {
 
 // PathByName gets a query parameter by its name eg. "locale"
 func (r *Request) GetAuthToken() string {
-	if r.HeaderByName("Authorization") != "" {
-		return r.HeaderByName("Authorization")
+	if r.Headers().Get("Authorization") != "" {
+		return r.Headers().Get("Authorization")
 	} else {
-		return r.HeaderByName("authorization")
+		return r.Headers().Get("authorization")
 	}
 }
