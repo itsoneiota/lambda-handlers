@@ -11,6 +11,7 @@ type AWSRequest struct {
 	pathParams  map[string]string
 	queryParams map[string]string
 	headers     http.Header
+	context     events.APIGatewayProxyRequestContext
 }
 
 func NewAWSRequest(r *events.APIGatewayProxyRequest) *AWSRequest {
@@ -24,6 +25,7 @@ func NewAWSRequest(r *events.APIGatewayProxyRequest) *AWSRequest {
 		pathParams:  r.PathParameters,
 		queryParams: r.QueryStringParameters,
 		headers:     headers,
+		context:     r.RequestContext,
 	}
 }
 
@@ -32,7 +34,12 @@ func (r *AWSRequest) Body() string {
 	return r.body
 }
 
-// HeaderByName gets a header by its name eg. "content-type"
+// Context gets request context
+func (r *AWSRequest) Context() events.APIGatewayProxyRequestContext {
+	return r.context
+}
+
+// Headers get the request headers
 func (r *AWSRequest) Headers() http.Header {
 	return r.headers
 }
