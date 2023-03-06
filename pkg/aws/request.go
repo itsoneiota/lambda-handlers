@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/itsoneiota/lambda-handlers/pkg/handler"
 )
 
 type AWSRequest struct {
@@ -12,7 +11,6 @@ type AWSRequest struct {
 	pathParams  map[string]string
 	queryParams map[string]string
 	headers     http.Header
-	context     Context
 }
 
 func NewAWSRequest(r *events.APIGatewayProxyRequest) *AWSRequest {
@@ -26,20 +24,12 @@ func NewAWSRequest(r *events.APIGatewayProxyRequest) *AWSRequest {
 		pathParams:  r.PathParameters,
 		queryParams: r.QueryStringParameters,
 		headers:     headers,
-		context: Context{
-			sourceIP: r.RequestContext.Identity.SourceIP,
-		},
 	}
 }
 
 // Body gets request payload
 func (r *AWSRequest) Body() string {
 	return r.body
-}
-
-// Context gets request context
-func (r *AWSRequest) Context() handler.Contexter {
-	return r.context
 }
 
 // Headers get the request headers

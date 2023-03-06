@@ -16,7 +16,7 @@ func Start(h handler.HandlerFunc) {
 
 func getHandler(h handler.HandlerFunc) LambdaCallback {
 	return func(r *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-		res, err := h(NewAWSRequest(r))
+		res, err := h(Context{r.RequestContext}, NewAWSRequest(r))
 
 		return NewEvent(res), err
 	}

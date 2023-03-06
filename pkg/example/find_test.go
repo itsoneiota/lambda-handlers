@@ -54,7 +54,7 @@ func TestFind_AWS(t *testing.T) {
 	)
 
 	// Asserts
-	resp, err := FindHandler(resHander, c, nil, nil)(req)
+	resp, err := FindHandler(resHander, c, nil, nil)(aws.Context{}, req)
 	assert.NoError(t, err)
 
 	awsRes := aws.NewEvent(resp)
