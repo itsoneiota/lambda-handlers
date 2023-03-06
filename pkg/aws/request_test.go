@@ -118,7 +118,7 @@ func TestNewAWSRequest(t *testing.T) {
 
 	// BEFORE
 	assert.Equal(t, body, actual.Body())
-	assert.IsType(t, events.APIGatewayProxyRequestContext{}, actual.Context())
+	assert.IsType(t, Context{}, actual.Context())
 	assert.Equal(t, pathVal, actual.PathByName(pathKey))
 	assert.Equal(t, headVal, actual.Headers().Get(headKey))
 	assert.Equal(t, queryVal, actual.QueryByName(queryKey))
