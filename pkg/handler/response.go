@@ -21,8 +21,8 @@ func NewResponseHandler(
 	}
 }
 
-// Body gets request payload
-func (r *ResponseHandler) BuildResponse(code int, model interface{}, headers http.Header) (*Response, error) {
+// BuildResponseWithHeader creates an output Response with header
+func (r *ResponseHandler) BuildResponseWithHeader(code int, model interface{}, headers http.Header) (*Response, error) {
 	body := ""
 	if model != nil {
 		bodyBytes, err := json.Marshal(model)
@@ -34,6 +34,11 @@ func (r *ResponseHandler) BuildResponse(code int, model interface{}, headers htt
 	}
 
 	return r.BuildResponder(code, body, headers)
+}
+
+// BuildResponse creates an output Response
+func (r *ResponseHandler) BuildResponse(code int, model interface{}) (*Response, error) {
+	return r.BuildResponseWithHeader(code, model, http.Header{})
 }
 
 // BuildRawJSONResponse builds an Response with the given status code & response body
@@ -53,7 +58,11 @@ func (r *ResponseHandler) BuildResponder(code int, body string, headers http.Hea
 	}, nil
 }
 
-func (r *ResponseHandler) BuildErrorResponse(err error, headers http.Header) (*Response, error) {
+func (r *ResponseHandler) BuildErrorResponse(err error) (*Response, error) {
+	return r.BuildErrorResponseWithHeader(err, http.Header{})
+}
+
+func (r *ResponseHandler) BuildErrorResponseWithHeader(err error, headers http.Header) (*Response, error) {
 	statusCode := http.StatusInternalServerError
 	var serviceErr error
 
@@ -78,7 +87,7 @@ func (r *ResponseHandler) BuildErrorResponse(err error, headers http.Header) (*R
 		r.logger.Error(err)
 	}
 
-	return r.BuildResponse(statusCode, serviceErr, headers)
+	return r.BuildResponseWithHeader(statusCode, serviceErr, headers)
 }
 
 func isServiceError(err error) (bool, int) {

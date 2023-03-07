@@ -28,7 +28,7 @@ func TestBuildResponder(t *testing.T) {
 	assert.IsType(t, (*Response)(nil), res)
 }
 
-func TestBuildResponse_Empty(t *testing.T) {
+func TestBuildResponseWithHeader_Empty(t *testing.T) {
 	code := 200
 	headers := http.Header{}
 	headers.Set("default", "header")
@@ -37,13 +37,13 @@ func TestBuildResponse_Empty(t *testing.T) {
 
 	hand := NewResponseHandler(l, headers)
 
-	res, err := hand.BuildResponse(code, nil, nil)
+	res, err := hand.BuildResponseWithHeader(code, nil, nil)
 
 	assert.NoError(t, err)
 	assert.IsType(t, (*Response)(nil), res)
 }
 
-func TestBuildResponse(t *testing.T) {
+func TestBuildResponseWithHeader(t *testing.T) {
 	model := Model{
 		Success: true,
 	}
@@ -56,7 +56,7 @@ func TestBuildResponse(t *testing.T) {
 
 	hand := NewResponseHandler(l, headers)
 
-	res, err := hand.BuildResponse(code, model, nil)
+	res, err := hand.BuildResponseWithHeader(code, model, nil)
 
 	assert.NoError(t, err)
 	assert.IsType(t, (*Response)(nil), res)
