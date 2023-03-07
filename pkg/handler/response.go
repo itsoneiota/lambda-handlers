@@ -33,7 +33,7 @@ func (r *ResponseHandler) BuildResponseWithHeader(code int, model interface{}, h
 		body = string(bodyBytes)
 	}
 
-	return r.BuildResponder(code, body, headers)
+	return r.BuildResponderWithHeader(code, body, headers)
 }
 
 // BuildResponse creates an output Response
@@ -41,9 +41,9 @@ func (r *ResponseHandler) BuildResponse(code int, model interface{}) (*Response,
 	return r.BuildResponseWithHeader(code, model, http.Header{})
 }
 
-// BuildRawJSONResponse builds an Response with the given status code & response body
+// BuildResponderWithHeader builds an Response with the given status code & response body
 // The Response will contain the raw response body and appropriate JSON header
-func (r *ResponseHandler) BuildResponder(code int, body string, headers http.Header) (*Response, error) {
+func (r *ResponseHandler) BuildResponderWithHeader(code int, body string, headers http.Header) (*Response, error) {
 	h := r.defaultHeaders
 	for k, v := range headers {
 		if len(v) > 0 {
@@ -56,6 +56,12 @@ func (r *ResponseHandler) BuildResponder(code int, body string, headers http.Hea
 		Body:       body,
 		Headers:    h,
 	}, nil
+}
+
+// BuildResponder builds an Response with the given status code & response body
+// The Response will contain the raw response body and appropriate JSON header
+func (r *ResponseHandler) BuildResponder(code int, body string) (*Response, error) {
+	return r.BuildResponderWithHeader(code, body, http.Header{})
 }
 
 func (r *ResponseHandler) BuildErrorResponse(err error) (*Response, error) {

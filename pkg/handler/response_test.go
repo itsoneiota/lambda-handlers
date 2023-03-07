@@ -22,7 +22,7 @@ func TestBuildResponder(t *testing.T) {
 
 	hand := NewResponseHandler(l, headers)
 
-	res, err := hand.BuildResponder(code, body, nil)
+	res, err := hand.BuildResponderWithHeader(code, body, nil)
 
 	assert.NoError(t, err)
 	assert.IsType(t, (*Response)(nil), res)
