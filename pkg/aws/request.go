@@ -32,7 +32,7 @@ func (r *AWSRequest) Body() string {
 	return r.body
 }
 
-// HeaderByName gets a header by its name eg. "content-type"
+// Headers get the request headers
 func (r *AWSRequest) Headers() http.Header {
 	return r.headers
 }
