@@ -5,6 +5,8 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/itsoneiota/lambda-handlers/pkg/aws"
+	"github.com/itsoneiota/lambda-handlers/pkg/handler"
 )
 
 type Request struct {
@@ -57,4 +59,8 @@ func (r *Request) GetAuthToken() string {
 	} else {
 		return r.Headers().Get("authorization")
 	}
+}
+
+func (r *Request) Context() handler.Contexter {
+	return aws.Context{}
 }
