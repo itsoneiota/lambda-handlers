@@ -38,11 +38,12 @@ func (r *ResponseHandler) BuildResponse(code int, model interface{}, headers htt
 
 // BuildRawJSONResponse builds an Response with the given status code & response body
 // The Response will contain the raw response body and appropriate JSON header
-func (r *ResponseHandler) BuildResponder(code int, body string, headers http.Header) (*Response, error) {
+func (r *ResponseHandler) BuildResponder(code int, body string, inputHeaders http.Header) (*Response, error) {
+	// add default and input headers
 	h := r.defaultHeaders
-	for k, v := range headers {
-		if len(v) > 0 {
-			h.Set(k, v[0])
+	for inputKey, inputVals := range inputHeaders {
+		for _, v := range inputVals {
+			h.Add(inputKey, v)
 		}
 	}
 
