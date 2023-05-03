@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"mime/multipart"
 	"net/http"
 	"testing"
 
@@ -121,4 +122,28 @@ func TestNewAWSRequest(t *testing.T) {
 	assert.Equal(t, pathVal, actual.PathByName(pathKey))
 	assert.Equal(t, headVal, actual.Headers().Get(headKey))
 	assert.Equal(t, queryVal, actual.QueryByName(queryKey))
+}
+
+func TestMultipartReader(t *testing.T) {
+	headKey := "Content-Type"
+	headVal := "multipart/form-data; boundary=--------------------------FOO"
+	body := `----------------------------FOO
+	Content-Disposition: form-data; name="file"; filename="upload.txt"
+	Content-Type: text/plain
+
+	this is content
+	----------------------------FOO--`
+
+	req := &events.APIGatewayProxyRequest{
+		Body: body,
+		Headers: map[string]string{
+			headKey: headVal,
+		},
+	}
+
+	actual := NewAWSRequest(req)
+
+	reader, err := actual.MultipartReader()
+	assert.NoError(t, err)
+	assert.IsType(t, &multipart.Reader{}, reader)
 }
