@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -53,6 +54,7 @@ func (r *AWSRequest) Headers() http.Header {
 
 // MultipartReader is an iterator over parts in a MIME multipart body
 func (r *AWSRequest) MultipartReader() (*multipart.Reader, error) {
+	fmt.Println(r.headers)
 	ct := r.headers.Get("content-type")
 	if len(ct) == 0 {
 		ct = r.headers.Get("Content-Type")
