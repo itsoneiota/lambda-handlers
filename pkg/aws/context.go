@@ -18,3 +18,8 @@ func (c Context) SourceIP() string {
 func (c Context) UnixNow() int64 {
 	return c.RequestTimeEpoch
 }
+
+// UserAgent returns the clients User-Agent request header value.
+func (c Context) UserAgent() string {
+	return c.Identity.UserAgent
+}
