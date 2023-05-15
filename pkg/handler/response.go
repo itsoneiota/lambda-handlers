@@ -44,17 +44,18 @@ func (r *ResponseHandler) BuildResponse(code int, model interface{}) (*Response,
 // BuildResponderWithHeader builds an Response with the given status code & response body
 // The Response will contain the raw response body and appropriate JSON header
 func (r *ResponseHandler) BuildResponderWithHeader(code int, body string, inputHeaders http.Header) (*Response, error) {
-	h := r.defaultHeaders
-	for inputKey, inputVals := range inputHeaders {
-		for _, v := range inputVals {
-			h.Add(inputKey, v)
+	if inputHeaders != nil {
+		for defKey, defVals := range r.defaultHeaders {
+			for _, v := range defVals {
+				inputHeaders.Add(defKey, v)
+			}
 		}
 	}
 
 	return &Response{
 		StatusCode: code,
 		Body:       body,
-		Headers:    h,
+		Headers:    inputHeaders,
 	}, nil
 }
 
