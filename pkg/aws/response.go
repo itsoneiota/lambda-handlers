@@ -1,6 +1,9 @@
 package aws
 
 import (
+	"net/http"
+	"strings"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/itsoneiota/lambda-handlers/pkg/handler"
@@ -23,16 +26,34 @@ func getHandler(h handler.HandlerFunc) LambdaCallback {
 }
 
 func NewEvent(r *handler.Response) *events.APIGatewayProxyResponse {
-	headers := map[string]string{}
-	for k, v := range r.Headers {
-		if len(v) > 0 {
-			headers[k] = v[0]
+	return &events.APIGatewayProxyResponse{
+		StatusCode: r.StatusCode,
+		Headers:    encodeHeaders(r.Headers),
+		Body:       r.Body,
+	}
+}
+
+func encodeHeaders(h http.Header) map[string]string {
+	result := map[string]string{}
+
+	for hKey, _ := range h {
+		valsUnique := unique(h.Values(hKey))
+		result[hKey] = strings.Join(valsUnique, "; ")
+	}
+
+	return result
+}
+
+func unique(slice []string) []string {
+	encountered := map[string]bool{}
+	result := []string{}
+
+	for _, value := range slice {
+		if !encountered[value] {
+			encountered[value] = true
+			result = append(result, value)
 		}
 	}
 
-	return &events.APIGatewayProxyResponse{
-		StatusCode: r.StatusCode,
-		Headers:    headers,
-		Body:       r.Body,
-	}
+	return result
 }
