@@ -36,7 +36,7 @@ func NewEvent(r *handler.Response) *events.APIGatewayProxyResponse {
 func encodeHeaders(h http.Header) map[string]string {
 	result := map[string]string{}
 
-	for hKey, _ := range h {
+	for hKey := range h {
 		valsUnique := unique(h.Values(hKey))
 		result[hKey] = strings.Join(valsUnique, "; ")
 	}
