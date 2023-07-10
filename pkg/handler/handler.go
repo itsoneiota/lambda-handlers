@@ -31,6 +31,8 @@ type Contexter interface {
 
 type Logger interface {
 	Error(args ...interface{})
+	Info(args ...interface{})
+	Debug(args ...interface{})
 }
 
 // BeforeHandlerHook is a callback function called before a handler functions main logic is ran.
