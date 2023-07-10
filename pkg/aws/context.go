@@ -23,3 +23,8 @@ func (c Context) UnixNow() int64 {
 func (c Context) UserAgent() string {
 	return c.Identity.UserAgent
 }
+
+// HttpMethod returns the http method that has been request.
+func (c Context) HttpMethod() string {
+	return c.HTTPMethod
+}

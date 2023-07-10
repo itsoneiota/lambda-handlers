@@ -21,3 +21,8 @@ func (c Context) UnixNow() int64 {
 	// TODO: functionally test this
 	return time.Now().Unix()
 }
+
+func (c Context) HttpMethod() string {
+	// TODO: functionally test this
+	return c.Method
+}
