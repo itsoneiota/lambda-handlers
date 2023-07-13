@@ -3,6 +3,7 @@ package mux
 import (
 	"bytes"
 	"net/http"
+	"net/url"
 
 	"github.com/gorilla/mux"
 	"github.com/itsoneiota/lambda-handlers/pkg/aws"
@@ -44,6 +45,11 @@ func (r *Request) QueryByName(name string) string {
 	v := r.request.URL.Query()
 
 	return v.Get(name)
+}
+
+// QueryByName gets a query parameter by its name eg. "locale"
+func (r *Request) QueryParams() url.Values {
+	return r.request.URL.Query()
 }
 
 // SetQueryByName gets a query parameter by its name eg. "locale"

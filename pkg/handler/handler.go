@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"net/url"
 )
 
 // Generic Request object which is used in every handler
@@ -10,6 +11,7 @@ type Requester interface {
 	Headers() http.Header
 	PathByName(name string) string
 	QueryByName(name string) string
+	QueryParams() url.Values
 	SetQueryByName(name, set string)
 	GetAuthToken() string
 }
