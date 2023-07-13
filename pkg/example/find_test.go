@@ -1,12 +1,13 @@
 package example
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/itsoneiota/lambda-handlers/internal/mocks"
-	"github.com/itsoneiota/lambda-handlers/pkg/aws"
-	"github.com/itsoneiota/lambda-handlers/pkg/handler"
+	"github.com/slatermorgan/lambda-handlers/internal/mocks"
+	"github.com/slatermorgan/lambda-handlers/pkg/aws"
+	"github.com/slatermorgan/lambda-handlers/pkg/handler"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sirupsen/logrus/hooks/test"
@@ -44,12 +45,16 @@ func TestFind_AWS(t *testing.T) {
 	).Times(1)
 
 	logger, _ := test.NewNullLogger()
+	headers := http.Header{}
+	headers.Set("Content-Type", "application/json")
 
-	resHander := handler.NewResponseHandler(logger, &aws.AWSResponse{})
-	resHander.DefaultHeaders = map[string]string{"Content-Type": "application/json"}
+	resHander := handler.NewResponseHandler(
+		logger,
+		headers,
+	)
 
 	// Asserts
-	resp, err := FindHandler(resHander, c, nil, nil)(req)
+	resp, err := FindHandler(resHander, c, nil, nil)(aws.Context{}, req)
 	assert.NoError(t, err)
 
 	awsRes := aws.NewEvent(resp)

@@ -1,22 +1,32 @@
 package handler
 
+import (
+	"net/http"
+	"net/url"
+)
+
 // Generic Request object which is used in every handler
 type Requester interface {
 	Body() string
-	HeaderByName(name string) string
+	Headers() http.Header
 	PathByName(name string) string
 	QueryByName(name string) string
+	QueryParams() url.Values
+	SetQueryByName(name, set string)
 	GetAuthToken() string
 }
 
-// Genertic Response object which is used in every handler
-type Responder interface {
-	StatusCode() int
-	Headers() map[string]string
-	Body() string
-	SetStatusCode(code int)
-	SetHeaders(headers map[string]string)
-	SetBody(body string)
+// Generic Response object which is used in every handler
+type Response struct {
+	StatusCode int
+	Headers    http.Header
+	Body       string
+}
+
+type Contexter interface {
+	SourceIP() string
+	UnixNow() int64
+	UserAgent() string
 }
 
 type Logger interface {
@@ -27,4 +37,4 @@ type Logger interface {
 // A Callback function can be passed in when building a handler and is passed the raw API Gateway Request struct
 type BeforeHandlerHook func(Requester) error
 
-type HandlerFunc = func(request Requester) (Responder, error)
+type HandlerFunc = func(c Contexter, request Requester) (*Response, error)

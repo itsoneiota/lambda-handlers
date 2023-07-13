@@ -3,7 +3,7 @@ package example
 import (
 	"net/http"
 
-	"github.com/itsoneiota/lambda-handlers/pkg/handler"
+	"github.com/slatermorgan/lambda-handlers/pkg/handler"
 )
 
 type ExampleModel struct {
@@ -28,7 +28,7 @@ func FindHandler(
 	beforeHook handler.BeforeHandlerHook,
 	afterHook AfterFindHandlerHook,
 ) handler.HandlerFunc {
-	return func(request handler.Requester) (handler.Responder, error) {
+	return func(ctx handler.Contexter, request handler.Requester) (*handler.Response, error) {
 		if beforeHook != nil {
 			if err := beforeHook(request); err != nil {
 				return resHander.BuildErrorResponse(err)

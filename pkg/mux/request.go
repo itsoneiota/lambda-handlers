@@ -3,8 +3,11 @@ package mux
 import (
 	"bytes"
 	"net/http"
+	"net/url"
 
 	"github.com/gorilla/mux"
+	"github.com/slatermorgan/lambda-handlers/pkg/aws"
+	"github.com/slatermorgan/lambda-handlers/pkg/handler"
 )
 
 type Request struct {
@@ -26,10 +29,8 @@ func (r *Request) Body() string {
 }
 
 // HeaderByName gets a header by its name eg. "content-type"
-func (r *Request) HeaderByName(name string) string {
-	head := r.request.Header
-
-	return head.Get(name)
+func (r *Request) Headers() http.Header {
+	return r.request.Header
 }
 
 // PathByName gets a path parameter by its name eg. "productID"
@@ -39,18 +40,33 @@ func (r *Request) PathByName(name string) string {
 	return vars[name]
 }
 
-// PathByName gets a query parameter by its name eg. "locale"
+// QueryByName gets a query parameter by its name eg. "locale"
 func (r *Request) QueryByName(name string) string {
 	v := r.request.URL.Query()
 
 	return v.Get(name)
 }
 
+// QueryByName gets a query parameter by its name eg. "locale"
+func (r *Request) QueryParams() url.Values {
+	return r.request.URL.Query()
+}
+
+// SetQueryByName gets a query parameter by its name eg. "locale"
+func (r *Request) SetQueryByName(name, set string) {
+	v := r.request.URL.Query()
+	v.Set(name, set)
+}
+
 // PathByName gets a query parameter by its name eg. "locale"
 func (r *Request) GetAuthToken() string {
-	if r.HeaderByName("Authorization") != "" {
-		return r.HeaderByName("Authorization")
+	if r.Headers().Get("Authorization") != "" {
+		return r.Headers().Get("Authorization")
 	} else {
-		return r.HeaderByName("authorization")
+		return r.Headers().Get("authorization")
 	}
+}
+
+func (r *Request) Context() handler.Contexter {
+	return aws.Context{}
 }

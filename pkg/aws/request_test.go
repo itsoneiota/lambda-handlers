@@ -1,12 +1,15 @@
 package aws
 
 import (
+	"net/http"
+	"net/url"
 	"testing"
 
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBody(t *testing.T) {
+func TestRequestGetters(t *testing.T) {
 	body := "abcdef"
 
 	token := "abc.def.ghi"
@@ -26,27 +29,29 @@ func TestBody(t *testing.T) {
 	query2Key := "t"
 	query2Val := "red"
 
+	headers := http.Header{}
+	headers.Set(headName, headVal)
+	headers.Set("Authorization", token)
+
+	values := url.Values{}
+	values.Set(queryKey, queryVal)
+	values.Set(query2Key, query2Val)
+
 	req := AWSRequest{
-		body: body,
-		headers: map[string]string{
-			headName:        headVal,
-			"Authorization": token,
-		},
+		body:    body,
+		headers: headers,
 		pathParams: map[string]string{
 			pathKey:  pathVal,
 			path2Key: path2Val,
 		},
-		queryParams: map[string]string{
-			queryKey:  queryVal,
-			query2Key: query2Val,
-		},
+		queryParams: values,
 	}
 
 	assert.Equal(t, body, req.Body())
 
-	assert.Equal(t, headVal, req.HeaderByName(headName))
+	assert.Equal(t, headVal, req.Headers().Get(headName))
 
-	assert.Equal(t, token, req.HeaderByName("Authorization"))
+	assert.Equal(t, token, req.Headers().Get("Authorization"))
 
 	assert.Equal(t, pathVal, req.PathByName(pathKey))
 
@@ -57,8 +62,66 @@ func TestBody_Empty(t *testing.T) {
 	req := AWSRequest{}
 
 	assert.Equal(t, "", req.Body())
-	assert.Equal(t, "", req.HeaderByName("headName"))
-	assert.Equal(t, "", req.HeaderByName("Authorization"))
+	assert.Equal(t, "", req.Headers().Get("headName"))
+	assert.Equal(t, "", req.Headers().Get("Authorization"))
 	assert.Equal(t, "", req.PathByName("pathKey"))
 	assert.Equal(t, "", req.QueryByName("queryKey"))
+}
+
+func TestSetQueryByName(t *testing.T) {
+	queryKey := "q"
+	queryVal := "football"
+
+	query2Key := "t"
+	query2Val := "red"
+
+	newQueryVal := "soccer"
+
+	values := url.Values{}
+	values.Set(queryKey, queryVal)
+	values.Set(query2Key, query2Val)
+
+	req := AWSRequest{
+		queryParams: values,
+	}
+
+	// BEFORE
+	assert.Equal(t, queryVal, req.QueryByName(queryKey))
+	assert.Equal(t, query2Val, req.QueryByName(query2Key))
+
+	req.SetQueryByName(queryKey, newQueryVal)
+	// AFTER
+	assert.Equal(t, newQueryVal, req.QueryByName(queryKey))
+	assert.Equal(t, query2Val, req.QueryByName(query2Key))
+}
+
+func TestNewAWSRequest(t *testing.T) {
+	pathKey := "pathKey"
+	pathVal := "path"
+	queryKey := "q"
+	queryVal := "football"
+	body := "body here"
+	headKey := "headerKey"
+	headVal := "headerValue"
+
+	req := &events.APIGatewayProxyRequest{
+		QueryStringParameters: map[string]string{
+			queryKey: queryVal,
+		},
+		PathParameters: map[string]string{
+			pathKey: pathVal,
+		},
+		Body: body,
+		Headers: map[string]string{
+			headKey: headVal,
+		},
+	}
+
+	actual := NewAWSRequest(req)
+
+	// BEFORE
+	assert.Equal(t, body, actual.Body())
+	assert.Equal(t, pathVal, actual.PathByName(pathKey))
+	assert.Equal(t, headVal, actual.Headers().Get(headKey))
+	assert.Equal(t, queryVal, actual.QueryByName(queryKey))
 }
