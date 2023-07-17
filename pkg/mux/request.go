@@ -7,8 +7,8 @@ import (
 	"net/url"
 
 	"github.com/gorilla/mux"
-	"github.com/slatermorgan/lambda-handlers/pkg/aws"
-	"github.com/slatermorgan/lambda-handlers/pkg/handler"
+	"github.com/itsoneiota/lambda-handlers/pkg/aws"
+	"github.com/itsoneiota/lambda-handlers/pkg/handler"
 )
 
 type Request struct {
