@@ -4,6 +4,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"testing"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -34,6 +35,10 @@ func TestRequestGetters(t *testing.T) {
 	headers.Set(headName, headVal)
 	headers.Set("Authorization", token)
 
+	values := url.Values{}
+	values.Set(queryKey, queryVal)
+	values.Set(query2Key, query2Val)
+
 	req := AWSRequest{
 		body:    body,
 		headers: headers,
@@ -41,10 +46,7 @@ func TestRequestGetters(t *testing.T) {
 			pathKey:  pathVal,
 			path2Key: path2Val,
 		},
-		queryParams: map[string]string{
-			queryKey:  queryVal,
-			query2Key: query2Val,
-		},
+		queryParams: values,
 	}
 
 	assert.Equal(t, body, req.Body())
@@ -77,11 +79,12 @@ func TestSetQueryByName(t *testing.T) {
 
 	newQueryVal := "soccer"
 
+	values := url.Values{}
+	values.Set(queryKey, queryVal)
+	values.Set(query2Key, query2Val)
+
 	req := AWSRequest{
-		queryParams: map[string]string{
-			queryKey:  queryVal,
-			query2Key: query2Val,
-		},
+		queryParams: values,
 	}
 
 	// BEFORE

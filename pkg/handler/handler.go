@@ -3,6 +3,7 @@ package handler
 import (
 	"mime/multipart"
 	"net/http"
+	"net/url"
 )
 
 // Generic Request object which is used in every handler
@@ -13,6 +14,7 @@ type Requester interface {
 	MultipartReader() (*multipart.Reader, error)
 	PathByName(name string) string
 	QueryByName(name string) string
+	QueryParams() url.Values
 	SetQueryByName(name, set string)
 }
 
@@ -26,6 +28,7 @@ type Response struct {
 type Contexter interface {
 	SourceIP() string
 	UnixNow() int64
+	UserAgent() string
 }
 
 type Logger interface {

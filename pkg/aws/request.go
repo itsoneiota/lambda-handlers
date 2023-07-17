@@ -7,6 +7,7 @@ import (
 	"mime"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -21,7 +22,7 @@ var (
 type AWSRequest struct {
 	body            string
 	pathParams      map[string]string
-	queryParams     map[string]string
+	queryParams     url.Values
 	headers         http.Header
 	isBase64Encoded bool
 }
@@ -32,10 +33,15 @@ func NewAWSRequest(r *events.APIGatewayProxyRequest) *AWSRequest {
 		headers.Set(k, v)
 	}
 
+	values := url.Values{}
+	for k, v := range r.QueryStringParameters {
+		values.Set(k, v)
+	}
+
 	return &AWSRequest{
 		body:            r.Body,
 		pathParams:      r.PathParameters,
-		queryParams:     r.QueryStringParameters,
+		queryParams:     values,
 		headers:         headers,
 		isBase64Encoded: r.IsBase64Encoded,
 	}
@@ -93,13 +99,18 @@ func (r *AWSRequest) PathByName(name string) string {
 
 // QueryByName gets a query parameter by its name eg. "locale"
 func (r *AWSRequest) QueryByName(name string) string {
-	return r.queryParams[name]
+	return r.queryParams.Get(name)
+}
+
+// QueryByName gets a query parameter by its name eg. "locale"
+func (r *AWSRequest) QueryParams() url.Values {
+	return r.queryParams
 }
 
 // PathByName sets a query parameter by its name eg. "locale"
 // This is used to alter requests in middleware functions.
 func (r *AWSRequest) SetQueryByName(name, set string) {
-	r.queryParams[name] = set
+	r.queryParams.Set(name, set)
 }
 
 // PathByName gets a query parameter by its name eg. "locale"

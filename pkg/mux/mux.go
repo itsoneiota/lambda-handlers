@@ -3,7 +3,7 @@ package mux
 import (
 	"net/http"
 
-	"github.com/itsoneiota/lambda-handlers/pkg/handler"
+	"github.com/slatermorgan/lambda-handlers/pkg/handler"
 )
 
 func CreateHandler(
