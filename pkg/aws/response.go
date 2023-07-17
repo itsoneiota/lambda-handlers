@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/slatermorgan/lambda-handlers/pkg/handler"
+	"github.com/itsoneiota/lambda-handlers/pkg/handler"
 )
 
 func NewEvent(r *handler.Response) *events.APIGatewayProxyResponse {

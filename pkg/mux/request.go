@@ -2,12 +2,13 @@ package mux
 
 import (
 	"bytes"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 
 	"github.com/gorilla/mux"
-	"github.com/slatermorgan/lambda-handlers/pkg/aws"
-	"github.com/slatermorgan/lambda-handlers/pkg/handler"
+	"github.com/itsoneiota/lambda-handlers/pkg/aws"
+	"github.com/itsoneiota/lambda-handlers/pkg/handler"
 )
 
 type Request struct {
@@ -31,6 +32,11 @@ func (r *Request) Body() string {
 // HeaderByName gets a header by its name eg. "content-type"
 func (r *Request) Headers() http.Header {
 	return r.request.Header
+}
+
+// MultipartReader is an iterator over parts in a MIME multipart body
+func (r *Request) MultipartReader() (*multipart.Reader, error) {
+	return r.request.MultipartReader()
 }
 
 // PathByName gets a path parameter by its name eg. "productID"

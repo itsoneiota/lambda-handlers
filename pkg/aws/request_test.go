@@ -1,6 +1,8 @@
 package aws
 
 import (
+	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"testing"
@@ -124,4 +126,35 @@ func TestNewAWSRequest(t *testing.T) {
 	assert.Equal(t, pathVal, actual.PathByName(pathKey))
 	assert.Equal(t, headVal, actual.Headers().Get(headKey))
 	assert.Equal(t, queryVal, actual.QueryByName(queryKey))
+}
+
+func TestMultipartReader(t *testing.T) {
+	headKey := "Content-Type"
+	headVal := "multipart/form-data; boundary=BOUNDARY"
+	content := "This is content"
+	body := "--BOUNDARY\r\n" +
+		"Content-Disposition: form-data; name=\"value\"\r\n" +
+		"\r\n" +
+		content +
+		"\r\n--BOUNDARY--\r\n"
+
+	req := &events.APIGatewayProxyRequest{
+		Body: body,
+		Headers: map[string]string{
+			headKey: headVal,
+		},
+	}
+
+	actual := NewAWSRequest(req)
+
+	reader, err := actual.MultipartReader()
+	assert.NoError(t, err)
+	assert.IsType(t, &multipart.Reader{}, reader)
+
+	part, err := reader.NextPart()
+	assert.NoError(t, err)
+
+	cnt, err := io.ReadAll(part)
+	assert.NoError(t, err)
+	assert.Equal(t, content, string(cnt))
 }
