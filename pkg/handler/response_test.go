@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/itsoneiota/lambda-handlers/pkg/handler/mocks"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,9 +17,7 @@ func TestBuildResponder(t *testing.T) {
 	headers := http.Header{}
 	headers.Set("default", "header")
 
-	l := mocks.NewLogger(t)
-
-	hand := NewResponseHandler(l, headers)
+	hand := NewResponseHandler(headers)
 
 	res, err := hand.BuildResponderWithHeader(code, body, nil)
 
@@ -33,9 +30,7 @@ func TestBuildResponseWithHeader_Empty(t *testing.T) {
 	headers := http.Header{}
 	headers.Set("default", "header")
 
-	l := mocks.NewLogger(t)
-
-	hand := NewResponseHandler(l, headers)
+	hand := NewResponseHandler(headers)
 
 	res, err := hand.BuildResponseWithHeader(code, nil, nil)
 
@@ -52,9 +47,7 @@ func TestBuildResponseWithHeader(t *testing.T) {
 	headers := http.Header{}
 	headers.Set("default", "header")
 
-	l := mocks.NewLogger(t)
-
-	hand := NewResponseHandler(l, headers)
+	hand := NewResponseHandler(headers)
 
 	res, err := hand.BuildResponseWithHeader(code, model, nil)
 
@@ -75,9 +68,7 @@ func TestBuildResponseWithHeader_Multiple(t *testing.T) {
 		},
 	}
 
-	l := mocks.NewLogger(t)
-
-	hand := NewResponseHandler(l, http.Header{})
+	hand := NewResponseHandler(http.Header{})
 
 	res, err := hand.BuildResponseWithHeader(code, model, headers)
 
@@ -101,9 +92,7 @@ func TestBuildResponseWithHeader_Cookie(t *testing.T) {
 		},
 	}
 
-	l := mocks.NewLogger(t)
-
-	hand := NewResponseHandler(l, http.Header{})
+	hand := NewResponseHandler(http.Header{})
 
 	res, err := hand.BuildResponseWithHeader(code, model, headers)
 

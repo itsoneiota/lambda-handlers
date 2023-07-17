@@ -9,7 +9,6 @@ import (
 	"github.com/itsoneiota/lambda-handlers/pkg/example"
 	"github.com/itsoneiota/lambda-handlers/pkg/handler"
 	"github.com/itsoneiota/lambda-handlers/pkg/mux"
-	"github.com/sirupsen/logrus/hooks/test"
 )
 
 func main() {
@@ -34,8 +33,7 @@ func main() {
 		nil,
 	).Times(1)
 
-	logger, _ := test.NewNullLogger()
-	resHander := handler.NewResponseHandler(logger, http.Header{})
+	resHander := handler.NewResponseHandler(http.Header{})
 
 	r := muxRouter.NewRouter()
 	r.HandleFunc("/test", mux.CreateHandler(example.FindHandler(resHander, c, nil, nil)))

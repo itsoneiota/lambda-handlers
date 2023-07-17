@@ -8,15 +8,12 @@ import (
 // Genertic Handler object which is the reciever in every handler method
 type ResponseHandler struct {
 	defaultHeaders http.Header
-	logger         Logger
 }
 
 func NewResponseHandler(
-	logger Logger,
 	defaultHeads http.Header,
 ) *ResponseHandler {
 	return &ResponseHandler{
-		logger:         logger,
 		defaultHeaders: defaultHeads,
 	}
 }
@@ -88,10 +85,6 @@ func (r *ResponseHandler) BuildErrorResponseWithHeader(err error, headers http.H
 				Message: "An unknown error occurred",
 			},
 		}
-	}
-
-	if statusCode == http.StatusInternalServerError {
-		r.logger.Error(err)
 	}
 
 	return r.BuildResponseWithHeader(statusCode, serviceErr, headers)

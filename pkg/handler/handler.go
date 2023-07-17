@@ -32,10 +32,6 @@ type Contexter interface {
 	HTTPMethod() string
 }
 
-type Logger interface {
-	Error(args ...interface{})
-}
-
 // BeforeHandlerHook is a callback function called before a handler functions main logic is ran.
 // A Callback function can be passed in when building a handler and is passed the raw API Gateway Request struct
 type BeforeHandlerHook func(Requester) error
