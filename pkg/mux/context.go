@@ -21,3 +21,9 @@ func (c Context) UnixNow() int64 {
 	// TODO: functionally test this
 	return time.Now().Unix()
 }
+
+// UnixNow returns the Epoch-formatted request time, in milliseconds.
+func (c Context) HTTPMethod() string {
+	// TODO: functionally test this
+	return c.Request.Method
+}

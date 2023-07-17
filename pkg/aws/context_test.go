@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -15,10 +16,12 @@ func TestContexterInterface(t *testing.T) {
 			SourceIP: ip,
 		},
 		RequestTimeEpoch: unixNow,
+		HTTPMethod:       http.MethodGet,
 	}
 
 	ctx := Context{e}
 
 	assert.Equal(t, ip, ctx.SourceIP())
 	assert.Equal(t, unixNow, ctx.UnixNow())
+	assert.Equal(t, http.MethodGet, ctx.HTTPMethod())
 }

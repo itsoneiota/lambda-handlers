@@ -23,3 +23,8 @@ func (c Context) UnixNow() int64 {
 func (c Context) UserAgent() string {
 	return c.Identity.UserAgent
 }
+
+// UserAgent returns the clients User-Agent request header value.
+func (c Context) HTTPMethod() string {
+	return c.APIGatewayProxyRequestContext.HTTPMethod
+}

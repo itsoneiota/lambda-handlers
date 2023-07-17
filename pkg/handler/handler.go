@@ -29,6 +29,7 @@ type Contexter interface {
 	SourceIP() string
 	UnixNow() int64
 	UserAgent() string
+	HTTPMethod() string
 }
 
 type Logger interface {
