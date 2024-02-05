@@ -1,10 +1,11 @@
 package handler
 
 import (
+	"log/slog"
 	"net/http"
 	"testing"
 
-	"github.com/itsoneiota/lambda-handlers/pkg/handler/mocks"
+	"github.com/itsoneiota/lambda-handlers/pkg/test"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,9 +19,11 @@ func TestBuildResponder(t *testing.T) {
 	headers := http.Header{}
 	headers.Set("default", "header")
 
-	l := mocks.NewLogger(t)
+	l := test.NewNullLogger()
 
-	hand := NewResponseHandler(l, headers)
+	slog.SetDefault(l)
+
+	hand := NewResponseHandler(headers)
 
 	res, err := hand.BuildResponderWithHeader(code, body, nil)
 
@@ -33,9 +36,11 @@ func TestBuildResponseWithHeader_Empty(t *testing.T) {
 	headers := http.Header{}
 	headers.Set("default", "header")
 
-	l := mocks.NewLogger(t)
+	l := test.NewNullLogger()
 
-	hand := NewResponseHandler(l, headers)
+	slog.SetDefault(l)
+
+	hand := NewResponseHandler(headers)
 
 	res, err := hand.BuildResponseWithHeader(code, nil, nil)
 
@@ -52,15 +57,18 @@ func TestBuildResponseWithHeader(t *testing.T) {
 	headers := http.Header{}
 	headers.Set("default", "header")
 
-	l := mocks.NewLogger(t)
+	l := test.NewNullLogger()
 
-	hand := NewResponseHandler(l, headers)
+	slog.SetDefault(l)
+
+	hand := NewResponseHandler(headers)
 
 	res, err := hand.BuildResponseWithHeader(code, model, nil)
 
 	assert.NoError(t, err)
 	assert.IsType(t, (*Response)(nil), res)
 }
+
 func TestBuildResponseWithHeader_Multiple(t *testing.T) {
 	model := Model{
 		Success: true,
@@ -75,9 +83,11 @@ func TestBuildResponseWithHeader_Multiple(t *testing.T) {
 		},
 	}
 
-	l := mocks.NewLogger(t)
+	l := test.NewNullLogger()
 
-	hand := NewResponseHandler(l, http.Header{})
+	slog.SetDefault(l)
+
+	hand := NewResponseHandler(http.Header{})
 
 	res, err := hand.BuildResponseWithHeader(code, model, headers)
 
@@ -101,9 +111,11 @@ func TestBuildResponseWithHeader_Cookie(t *testing.T) {
 		},
 	}
 
-	l := mocks.NewLogger(t)
+	l := test.NewNullLogger()
 
-	hand := NewResponseHandler(l, http.Header{})
+	slog.SetDefault(l)
+
+	hand := NewResponseHandler(http.Header{})
 
 	res, err := hand.BuildResponseWithHeader(code, model, headers)
 

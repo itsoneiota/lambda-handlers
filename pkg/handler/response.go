@@ -2,21 +2,19 @@ package handler
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 )
 
 // Genertic Handler object which is the reciever in every handler method
 type ResponseHandler struct {
 	defaultHeaders http.Header
-	logger         Logger
 }
 
 func NewResponseHandler(
-	logger Logger,
 	defaultHeads http.Header,
 ) *ResponseHandler {
 	return &ResponseHandler{
-		logger:         logger,
 		defaultHeaders: defaultHeads,
 	}
 }
@@ -91,7 +89,7 @@ func (r *ResponseHandler) BuildErrorResponseWithHeader(err error, headers http.H
 	}
 
 	if statusCode == http.StatusInternalServerError {
-		r.logger.Error(err)
+		slog.Error(err.Error())
 	}
 
 	return r.BuildResponseWithHeader(statusCode, serviceErr, headers)

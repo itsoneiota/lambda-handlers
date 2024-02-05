@@ -1,6 +1,7 @@
 package example
 
 import (
+	"log/slog"
 	"net/http"
 	"testing"
 
@@ -8,9 +9,8 @@ import (
 	"github.com/itsoneiota/lambda-handlers/internal/mocks"
 	"github.com/itsoneiota/lambda-handlers/pkg/aws"
 	"github.com/itsoneiota/lambda-handlers/pkg/handler"
+	"github.com/itsoneiota/lambda-handlers/pkg/test"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/sirupsen/logrus/hooks/test"
 )
 
 func TestFind_AWS(t *testing.T) {
@@ -44,12 +44,13 @@ func TestFind_AWS(t *testing.T) {
 		nil,
 	).Times(1)
 
-	logger, _ := test.NewNullLogger()
+	l := test.NewNullLogger()
+	slog.SetDefault(l)
+
 	headers := http.Header{}
 	headers.Set("Content-Type", "application/json")
 
 	resHander := handler.NewResponseHandler(
-		logger,
 		headers,
 	)
 
