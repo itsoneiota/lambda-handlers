@@ -19,11 +19,16 @@ func (c Context) SourceIP() string {
 // UnixNow returns the Epoch-formatted request time, in milliseconds.
 func (c Context) UnixNow() int64 {
 	// TODO: functionally test this
-	return time.Now().Unix()
+	return time.Now().UnixMilli()
 }
 
 // UnixNow returns the Epoch-formatted request time, in milliseconds.
 func (c Context) HTTPMethod() string {
 	// TODO: functionally test this
 	return c.Request.Method
+}
+
+func (c Context) HttpMethod() string {
+	// TODO: functionally test this
+	return c.Method
 }
