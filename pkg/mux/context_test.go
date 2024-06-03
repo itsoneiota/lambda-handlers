@@ -18,5 +18,5 @@ func TestContexterInterface(t *testing.T) {
 
 	assert.Equal(t, ip, ctx.SourceIP())
 	assert.IsType(t, int64(1), ctx.UnixNow())
-	assert.IsType(t, http.MethodGet, ctx.HTTPMethod())
+	assert.IsType(t, http.MethodGet, ctx.HttpMethod())
 }

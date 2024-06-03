@@ -27,3 +27,8 @@ func (c Context) HTTPMethod() string {
 	// TODO: functionally test this
 	return c.Request.Method
 }
+
+func (c Context) HttpMethod() string {
+	// TODO: functionally test this
+	return c.Method
+}

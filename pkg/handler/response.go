@@ -97,6 +97,10 @@ func (r *ResponseHandler) BuildErrorResponseWithHeader(err error, headers http.H
 	return r.BuildResponseWithHeader(statusCode, serviceErr, headers)
 }
 
+func (r *ResponseHandler) Logger() Logger {
+	return r.logger
+}
+
 func isServiceError(err error) (bool, int) {
 	var code int
 

@@ -29,11 +29,13 @@ type Contexter interface {
 	SourceIP() string
 	UnixNow() int64
 	UserAgent() string
-	HTTPMethod() string
+	HttpMethod() string
 }
 
 type Logger interface {
 	Error(args ...interface{})
+	Info(args ...interface{})
+	Debug(args ...interface{})
 }
 
 // BeforeHandlerHook is a callback function called before a handler functions main logic is ran.
