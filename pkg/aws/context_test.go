@@ -10,6 +10,7 @@ import (
 
 func TestContexterInterface(t *testing.T) {
 	ip := "SourceIP"
+	stage := "dev"
 	unixNow := int64(1234567)
 	e := events.APIGatewayProxyRequestContext{
 		Identity: events.APIGatewayRequestIdentity{
@@ -17,6 +18,7 @@ func TestContexterInterface(t *testing.T) {
 		},
 		RequestTimeEpoch: unixNow,
 		HTTPMethod:       http.MethodGet,
+		Stage:            stage,
 	}
 
 	ctx := Context{e}
@@ -24,4 +26,5 @@ func TestContexterInterface(t *testing.T) {
 	assert.Equal(t, ip, ctx.SourceIP())
 	assert.Equal(t, unixNow, ctx.UnixNow())
 	assert.Equal(t, http.MethodGet, ctx.HttpMethod())
+	assert.Equal(t, stage, ctx.Stage())
 }

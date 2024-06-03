@@ -28,3 +28,7 @@ func (c Context) UserAgent() string {
 func (c Context) HttpMethod() string {
 	return c.HTTPMethod
 }
+
+func (c Context) Stage() string {
+	return c.APIGatewayProxyRequestContext.Stage
+}
