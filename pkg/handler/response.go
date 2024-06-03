@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 )
 
@@ -85,6 +86,10 @@ func (r *ResponseHandler) BuildErrorResponseWithHeader(err error, headers http.H
 				Message: "An unknown error occurred",
 			},
 		}
+	}
+
+	if statusCode == http.StatusInternalServerError {
+		slog.Error(err.Error())
 	}
 
 	return r.BuildResponseWithHeader(statusCode, serviceErr, headers)

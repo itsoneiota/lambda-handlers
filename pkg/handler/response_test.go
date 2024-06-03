@@ -1,9 +1,11 @@
 package handler
 
 import (
+	"log/slog"
 	"net/http"
 	"testing"
 
+	"github.com/itsoneiota/lambda-handlers/pkg/test"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,6 +19,9 @@ func TestBuildResponder(t *testing.T) {
 	headers := http.Header{}
 	headers.Set("default", "header")
 
+	l := test.NewNullLogger()
+	slog.SetDefault(l)
+
 	hand := NewResponseHandler(headers)
 
 	res, err := hand.BuildResponderWithHeader(code, body, nil)
@@ -29,6 +34,9 @@ func TestBuildResponseWithHeader_Empty(t *testing.T) {
 	code := 200
 	headers := http.Header{}
 	headers.Set("default", "header")
+
+	l := test.NewNullLogger()
+	slog.SetDefault(l)
 
 	hand := NewResponseHandler(headers)
 
@@ -47,6 +55,9 @@ func TestBuildResponseWithHeader(t *testing.T) {
 	headers := http.Header{}
 	headers.Set("default", "header")
 
+	l := test.NewNullLogger()
+	slog.SetDefault(l)
+
 	hand := NewResponseHandler(headers)
 
 	res, err := hand.BuildResponseWithHeader(code, model, nil)
@@ -54,6 +65,7 @@ func TestBuildResponseWithHeader(t *testing.T) {
 	assert.NoError(t, err)
 	assert.IsType(t, (*Response)(nil), res)
 }
+
 func TestBuildResponseWithHeader_Multiple(t *testing.T) {
 	model := Model{
 		Success: true,
@@ -91,6 +103,9 @@ func TestBuildResponseWithHeader_Cookie(t *testing.T) {
 			"QueueITAccepted-SDFrts345E-V3_nativeapptesta=EventId%3Dnativeapptesta%26QueueId%3Dd8dce36b-6cae-4e7b-b4af-c9bf27a9fb7f%26RedirectType%3Dqueue%26IssueTime%3D1685627225%26Hip%3D4c554f91c51760dd1d6a7fab0bbc41f7fe3023401c14a14db2174b1a677b747b%26Hash%3Deb133680cd4f6a163d6305ef0760a8b6b3abcef4e3b5907d6ef5f4d41c6d9dd4; expires=Fri, 02 Jun 2023 13:47:05 GMT; path=/",
 		},
 	}
+
+	l := test.NewNullLogger()
+	slog.SetDefault(l)
 
 	hand := NewResponseHandler(http.Header{})
 
