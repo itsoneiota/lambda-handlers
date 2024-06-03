@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"mime/multipart"
 	"net/http"
 	"net/url"
 )
@@ -8,12 +9,13 @@ import (
 // Generic Request object which is used in every handler
 type Requester interface {
 	Body() string
+	GetAuthToken() string
 	Headers() http.Header
+	MultipartReader() (*multipart.Reader, error)
 	PathByName(name string) string
 	QueryByName(name string) string
 	QueryParams() url.Values
 	SetQueryByName(name, set string)
-	GetAuthToken() string
 }
 
 // Generic Response object which is used in every handler
