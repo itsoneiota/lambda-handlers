@@ -30,6 +30,7 @@ type Contexter interface {
 	UnixNow() int64
 	UserAgent() string
 	HttpMethod() string
+	Stage() string
 }
 
 // BeforeHandlerHook is a callback function called before a handler functions main logic is ran.

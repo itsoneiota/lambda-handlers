@@ -12,23 +12,20 @@ type Context struct {
 
 // SourceIP returns the source ip that has made the request.
 func (c Context) SourceIP() string {
-	// TODO: functionally test this
 	return c.RemoteAddr
 }
 
 // UnixNow returns the Epoch-formatted request time, in milliseconds.
 func (c Context) UnixNow() int64 {
-	// TODO: functionally test this
 	return time.Now().UnixMilli()
 }
 
-// UnixNow returns the Epoch-formatted request time, in milliseconds.
-func (c Context) HTTPMethod() string {
-	// TODO: functionally test this
+// HttpMethod returns the http method of a request
+func (c Context) HttpMethod() string {
 	return c.Request.Method
 }
 
-func (c Context) HttpMethod() string {
-	// TODO: functionally test this
-	return c.Method
+// Stage returns the stage of the environment.
+func (c Context) Stage() string {
+	return "dev" // We will default this to "dev" for the mux server as it is for local development.
 }
