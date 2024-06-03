@@ -24,7 +24,7 @@ func (c Context) UserAgent() string {
 	return c.Identity.UserAgent
 }
 
-// UserAgent returns the clients User-Agent request header value.
-func (c Context) HTTPMethod() string {
-	return c.APIGatewayProxyRequestContext.HTTPMethod
+// HttpMethod returns the http method that has been request.
+func (c Context) HttpMethod() string {
+	return c.HTTPMethod
 }

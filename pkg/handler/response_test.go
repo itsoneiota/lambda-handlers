@@ -20,7 +20,6 @@ func TestBuildResponder(t *testing.T) {
 	headers.Set("default", "header")
 
 	l := test.NewNullLogger()
-
 	slog.SetDefault(l)
 
 	hand := NewResponseHandler(headers)
@@ -37,7 +36,6 @@ func TestBuildResponseWithHeader_Empty(t *testing.T) {
 	headers.Set("default", "header")
 
 	l := test.NewNullLogger()
-
 	slog.SetDefault(l)
 
 	hand := NewResponseHandler(headers)
@@ -58,7 +56,6 @@ func TestBuildResponseWithHeader(t *testing.T) {
 	headers.Set("default", "header")
 
 	l := test.NewNullLogger()
-
 	slog.SetDefault(l)
 
 	hand := NewResponseHandler(headers)
@@ -82,10 +79,6 @@ func TestBuildResponseWithHeader_Multiple(t *testing.T) {
 			"ak_p; desc=\"467247_400071605_276706062_672_15674_1_0\";dur=1",
 		},
 	}
-
-	l := test.NewNullLogger()
-
-	slog.SetDefault(l)
 
 	hand := NewResponseHandler(http.Header{})
 
@@ -112,7 +105,6 @@ func TestBuildResponseWithHeader_Cookie(t *testing.T) {
 	}
 
 	l := test.NewNullLogger()
-
 	slog.SetDefault(l)
 
 	hand := NewResponseHandler(http.Header{})

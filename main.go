@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"log/slog"
 	"net/http"
 
 	muxRouter "github.com/gorilla/mux"
@@ -10,7 +9,6 @@ import (
 	"github.com/itsoneiota/lambda-handlers/pkg/example"
 	"github.com/itsoneiota/lambda-handlers/pkg/handler"
 	"github.com/itsoneiota/lambda-handlers/pkg/mux"
-	"github.com/itsoneiota/lambda-handlers/pkg/test"
 )
 
 func main() {
@@ -34,9 +32,6 @@ func main() {
 		model,
 		nil,
 	).Times(1)
-
-	l := test.NewNullLogger()
-	slog.SetDefault(l)
 
 	resHander := handler.NewResponseHandler(http.Header{})
 
