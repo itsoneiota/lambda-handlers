@@ -50,15 +50,14 @@ func TestFind_AWS(t *testing.T) {
 	headers := http.Header{}
 	headers.Set("Content-Type", "application/json")
 
-	resHander := handler.NewResponseHandler(
-		headers,
-	)
+	resHander := handler.NewResponseHandler()
+	res := aws.NewResponseWriter(headers)
 
 	// Asserts
-	resp, err := FindHandler(resHander, c, nil, nil)(aws.Context{}, req)
+	err := FindHandler(resHander, c, nil, nil)(res, req)
 	assert.NoError(t, err)
 
-	awsRes := aws.NewEvent(resp)
+	awsRes := aws.NewEvent(res)
 	expectAwsRes := &events.APIGatewayProxyResponse{
 		StatusCode:        200,
 		Headers:           map[string]string{"Content-Type": "application/json"},

@@ -8,21 +8,20 @@ import (
 
 // Generic Request object which is used in every handler
 type Requester interface {
+	AddCookie(c *http.Cookie)
 	Body() string
+	Context() Contexter
+	Cookie(name string) (*http.Cookie, error)
+	Cookies() []*http.Cookie
 	GetAuthToken() string
 	Headers() http.Header
 	MultipartReader() (*multipart.Reader, error)
 	PathByName(name string) string
 	QueryByName(name string) string
 	QueryParams() url.Values
+	Referer() string
 	SetQueryByName(name, set string)
-}
-
-// Generic Response object which is used in every handler
-type Response struct {
-	StatusCode int
-	Headers    http.Header
-	Body       string
+	UserAgent() string
 }
 
 type Contexter interface {
@@ -37,4 +36,4 @@ type Contexter interface {
 // A Callback function can be passed in when building a handler and is passed the raw API Gateway Request struct
 type BeforeHandlerHook func(Requester) error
 
-type HandlerFunc = func(c Contexter, request Requester) (*Response, error)
+type HandlerFunc = func(res http.ResponseWriter, req Requester) error

@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/itsoneiota/lambda-handlers/pkg/handler"
 )
 
 var (
@@ -21,10 +22,12 @@ var (
 
 type AWSRequest struct {
 	body            string
-	pathParams      map[string]string
-	queryParams     url.Values
+	context         handler.Contexter
+	cookies         []*http.Cookie
 	headers         http.Header
 	isBase64Encoded bool
+	pathParams      map[string]string
+	queryParams     url.Values
 }
 
 func NewAWSRequest(r *events.APIGatewayProxyRequest) *AWSRequest {
@@ -38,18 +41,76 @@ func NewAWSRequest(r *events.APIGatewayProxyRequest) *AWSRequest {
 		values.Set(k, v)
 	}
 
+	cookies := []*http.Cookie{}
+	c := headers.Get("Cookie")
+	if c == "" {
+		c = headers.Get("cookie")
+	}
+
+	if c != "" {
+		for _, cookie := range strings.Split(";", c) {
+			if s := strings.Split("=", cookie); len(s) > 1 {
+				cookies = append(cookies, &http.Cookie{
+					Name:  s[0],
+					Value: s[1],
+				})
+			}
+		}
+	}
+
 	return &AWSRequest{
-		body:            r.Body,
+		body: r.Body,
+		context: &Context{
+			APIGatewayProxyRequestContext: r.RequestContext,
+		},
+		cookies:         cookies,
+		isBase64Encoded: r.IsBase64Encoded,
+		headers:         headers,
 		pathParams:      r.PathParameters,
 		queryParams:     values,
-		headers:         headers,
-		isBase64Encoded: r.IsBase64Encoded,
 	}
+}
+
+// Add cookie
+func (r *AWSRequest) AddCookie(c *http.Cookie) {
+	r.cookies = append(r.cookies, c)
 }
 
 // Body gets request payload
 func (r *AWSRequest) Body() string {
 	return r.body
+}
+
+// Get context
+func (r *AWSRequest) Context() handler.Contexter {
+	return r.context
+}
+
+// Get cookie
+func (r *AWSRequest) Cookie(name string) (*http.Cookie, error) {
+	var result *http.Cookie
+	for _, c := range r.cookies {
+		if c.Name == name {
+			result = c
+			break
+		}
+	}
+
+	return result, nil
+}
+
+// Get cookies
+func (r *AWSRequest) Cookies() []*http.Cookie {
+	return r.cookies
+}
+
+// Get auth token from headers.
+func (r *AWSRequest) GetAuthToken() string {
+	if v := r.Headers().Get("Authorization"); v != "" {
+		return v
+	}
+
+	return r.Headers().Get("authorization")
 }
 
 // Headers get the request headers
@@ -102,22 +163,30 @@ func (r *AWSRequest) QueryByName(name string) string {
 	return r.queryParams.Get(name)
 }
 
-// QueryByName gets a query parameter by its name eg. "locale"
+// QueryByName gets all query parameters
 func (r *AWSRequest) QueryParams() url.Values {
 	return r.queryParams
 }
 
-// PathByName sets a query parameter by its name eg. "locale"
-// This is used to alter requests in middleware functions.
+// Get referer
+func (r *AWSRequest) Referer() string {
+	if v := r.Headers().Get("Referer"); v != "" {
+		return v
+	}
+
+	return r.Headers().Get("referer")
+}
+
+// Sets a query parameter against the request.
 func (r *AWSRequest) SetQueryByName(name, set string) {
 	r.queryParams.Set(name, set)
 }
 
-// PathByName gets a query parameter by its name eg. "locale"
-func (r *AWSRequest) GetAuthToken() string {
-	if r.Headers().Get("Authorization") != "" {
-		return r.Headers().Get("Authorization")
-	} else {
-		return r.Headers().Get("authorization")
+// Get user agent
+func (r *AWSRequest) UserAgent() string {
+	if v := r.Headers().Get("User-Agent"); v != "" {
+		return v
 	}
+
+	return r.Headers().Get("user-agent")
 }

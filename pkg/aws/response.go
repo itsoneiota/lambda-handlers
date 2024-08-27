@@ -11,24 +11,31 @@ import (
 
 type LambdaCallback = func(request *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error)
 
-func Start(h handler.HandlerFunc) {
+func Start(
+	h handler.HandlerFunc,
+	defaultHeaders http.Header,
+) {
 	lambda.Start(
-		getHandler(h),
+		getHandler(h, defaultHeaders),
 	)
 }
 
-func getHandler(h handler.HandlerFunc) LambdaCallback {
+func getHandler(
+	h handler.HandlerFunc,
+	defaultHeaders http.Header,
+) LambdaCallback {
 	return func(r *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-		res, err := h(Context{r.RequestContext}, NewAWSRequest(r))
+		resp := NewResponseWriter(defaultHeaders)
+		err := h(resp, NewAWSRequest(r))
 
-		return NewEvent(res), err
+		return NewEvent(resp), err
 	}
 }
 
-func NewEvent(r *handler.Response) *events.APIGatewayProxyResponse {
+func NewEvent(r *ResponseWriter) *events.APIGatewayProxyResponse {
 	return &events.APIGatewayProxyResponse{
 		StatusCode: r.StatusCode,
-		Headers:    encodeHeaders(r.Headers),
+		Headers:    r.Headers,
 		Body:       r.Body,
 	}
 }

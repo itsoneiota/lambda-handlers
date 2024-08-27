@@ -28,31 +28,31 @@ func FindHandler(
 	beforeHook handler.BeforeHandlerHook,
 	afterHook AfterFindHandlerHook,
 ) handler.HandlerFunc {
-	return func(ctx handler.Contexter, request handler.Requester) (*handler.Response, error) {
+	return func(w http.ResponseWriter, request handler.Requester) error {
 		if beforeHook != nil {
 			if err := beforeHook(request); err != nil {
-				return resHander.BuildErrorResponse(err)
+				return resHander.BuildErrorResponse(w, err)
 			}
 		}
 
 		token := request.GetAuthToken()
 		if err := connector.Authorize(token); err != nil {
-			return resHander.BuildErrorResponse(err)
+			return resHander.BuildErrorResponse(w, err)
 		}
 
 		postcode := request.QueryByName("postcode")
 
 		addresses, err := connector.Find(postcode)
 		if err != nil {
-			return resHander.BuildErrorResponse(err)
+			return resHander.BuildErrorResponse(w, err)
 		}
 
 		if afterHook != nil {
 			if err := afterHook(addresses); err != nil {
-				return resHander.BuildErrorResponse(err)
+				return resHander.BuildErrorResponse(w, err)
 			}
 		}
 
-		return resHander.BuildResponse(http.StatusOK, addresses)
+		return resHander.BuildResponse(w, http.StatusOK, addresses)
 	}
 }

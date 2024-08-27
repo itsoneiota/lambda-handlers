@@ -9,6 +9,30 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type reponseWriter struct {
+	Headers http.Header
+	Body    []byte
+	Status  int
+}
+
+func (r *reponseWriter) Header() http.Header {
+	if r.Headers == nil {
+		r.Headers = http.Header{}
+	}
+
+	return r.Headers
+}
+
+func (r *reponseWriter) Write(body []byte) (int, error) {
+	r.Body = body
+
+	return len(body), nil
+}
+
+func (r *reponseWriter) WriteHeader(status int) {
+	r.Status = status
+}
+
 type Model struct {
 	Success bool `json:"success"`
 }
@@ -22,12 +46,17 @@ func TestBuildResponder(t *testing.T) {
 	l := test.NewNullLogger()
 	slog.SetDefault(l)
 
-	hand := NewResponseHandler(headers)
+	hand := NewResponseHandler()
+	res := &reponseWriter{
+		Headers: headers,
+	}
 
-	res, err := hand.BuildResponderWithHeader(code, body, nil)
-
+	err := hand.BuildResponderWithHeader(res, code, body, nil)
 	assert.NoError(t, err)
-	assert.IsType(t, (*Response)(nil), res)
+
+	assert.Equal(t, 200, res.Status)
+	assert.Equal(t, body, string(res.Body))
+	assert.Equal(t, "header", res.Headers.Get("Default"))
 }
 
 func TestBuildResponseWithHeader_Empty(t *testing.T) {
@@ -38,12 +67,17 @@ func TestBuildResponseWithHeader_Empty(t *testing.T) {
 	l := test.NewNullLogger()
 	slog.SetDefault(l)
 
-	hand := NewResponseHandler(headers)
+	hand := NewResponseHandler()
+	res := &reponseWriter{
+		Headers: headers,
+	}
 
-	res, err := hand.BuildResponseWithHeader(code, nil, nil)
-
+	err := hand.BuildResponseWithHeader(res, code, nil, nil)
 	assert.NoError(t, err)
-	assert.IsType(t, (*Response)(nil), res)
+
+	assert.Equal(t, 200, res.Status)
+	assert.Equal(t, "", string(res.Body))
+	assert.Equal(t, "header", res.Headers.Get("Default"))
 }
 
 func TestBuildResponseWithHeader(t *testing.T) {
@@ -58,12 +92,17 @@ func TestBuildResponseWithHeader(t *testing.T) {
 	l := test.NewNullLogger()
 	slog.SetDefault(l)
 
-	hand := NewResponseHandler(headers)
+	hand := NewResponseHandler()
+	res := &reponseWriter{
+		Headers: headers,
+	}
 
-	res, err := hand.BuildResponseWithHeader(code, model, nil)
-
+	err := hand.BuildResponseWithHeader(res, code, model, nil)
 	assert.NoError(t, err)
-	assert.IsType(t, (*Response)(nil), res)
+
+	assert.Equal(t, 200, res.Status)
+	assert.Equal(t, `{"success":true}`, string(res.Body))
+	assert.Equal(t, "header", res.Headers.Get("Default"))
 }
 
 func TestBuildResponseWithHeader_Multiple(t *testing.T) {
@@ -80,13 +119,15 @@ func TestBuildResponseWithHeader_Multiple(t *testing.T) {
 		},
 	}
 
-	hand := NewResponseHandler(http.Header{})
+	hand := NewResponseHandler()
+	res := &reponseWriter{}
 
-	res, err := hand.BuildResponseWithHeader(code, model, headers)
-
+	err := hand.BuildResponseWithHeader(res, code, model, headers)
 	assert.NoError(t, err)
-	assert.IsType(t, (*Response)(nil), res)
-	assert.Equal(t, headers, res.Headers)
+
+	assert.Equal(t, 200, res.Status)
+	assert.Equal(t, `{"success":true}`, string(res.Body))
+	assert.Equal(t, 3, len(res.Headers["Server-Timing"]))
 }
 
 func TestBuildResponseWithHeader_Cookie(t *testing.T) {
@@ -107,11 +148,11 @@ func TestBuildResponseWithHeader_Cookie(t *testing.T) {
 	l := test.NewNullLogger()
 	slog.SetDefault(l)
 
-	hand := NewResponseHandler(http.Header{})
+	hand := NewResponseHandler()
+	res := &reponseWriter{}
 
-	res, err := hand.BuildResponseWithHeader(code, model, headers)
+	err := hand.BuildResponseWithHeader(res, code, model, headers)
 
 	assert.NoError(t, err)
-	assert.IsType(t, (*Response)(nil), res)
 	assert.Equal(t, headers, res.Headers)
 }
