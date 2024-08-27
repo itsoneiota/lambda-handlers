@@ -6,13 +6,12 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/itsoneiota/lambda-handlers/pkg/handler"
 )
 
-type LambdaCallback = func(request *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error)
+type LambdaCallback = func(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse
 
 func Start(
-	h handler.HandlerFunc,
+	h http.HandlerFunc,
 	defaultHeaders http.Header,
 ) {
 	lambda.Start(
@@ -21,14 +20,14 @@ func Start(
 }
 
 func getHandler(
-	h handler.HandlerFunc,
+	h http.HandlerFunc,
 	defaultHeaders http.Header,
 ) LambdaCallback {
-	return func(r *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
+	return func(r *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
 		resp := NewResponseWriter(defaultHeaders)
-		err := h(resp, NewAWSRequest(r))
+		h(resp, NewHttpRequest())
 
-		return NewEvent(resp), err
+		return NewEvent(resp)
 	}
 }
 
