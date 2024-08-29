@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
-type LambdaCallback = func(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse
+type LambdaCallback = func(request *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error)
 
 func Start(
 	h http.HandlerFunc,
@@ -23,11 +23,15 @@ func getHandler(
 	h http.HandlerFunc,
 	defaultHeaders http.Header,
 ) LambdaCallback {
-	return func(r *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
+	return func(r *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 		resp := NewResponseWriter(defaultHeaders)
-		h(resp, NewHttpRequest())
+		req, err := NewHttpRequest(r)
+		if err != nil {
+			return nil, err
+		}
+		h(resp, req)
 
-		return NewEvent(resp)
+		return NewEvent(resp), nil
 	}
 }
 

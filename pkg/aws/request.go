@@ -1,8 +1,19 @@
 package aws
 
 import (
+	"bytes"
+	"context"
+	"encoding/base64"
 	"errors"
+	"fmt"
+	"io"
+	"mime"
+	"mime/multipart"
 	"net/http"
+	"net/url"
+	"strings"
+
+	"github.com/aws/aws-lambda-go/events"
 )
 
 var (
@@ -11,8 +22,120 @@ var (
 	ErrContentTypeHeaderMissingBoundary = errors.New("content type header missing boundary error")
 )
 
-func NewHttpRequest() *http.Request {
-	return &http.Request{}
+func NewHttpRequest(r *events.APIGatewayProxyRequest) (*http.Request, error) {
+	form, err := getMultipartForm(r, 32<<20) // 32 MB max memory
+	if err != nil {
+		return nil, err
+	}
+
+	req := &http.Request{
+		Method: r.HTTPMethod,
+		URL: &url.URL{
+			Scheme:   "https",
+			Path:     r.Path,
+			RawPath:  getRawPath(r, true),
+			RawQuery: getRawPath(r, false),
+		},
+		Header:        getHeaders(r),
+		Body:          getBody(r),
+		MultipartForm: form,
+	}
+
+	ctx := context.Background()
+	req.WithContext(ctx)
+
+	return req, nil
+}
+
+func getBody(r *events.APIGatewayProxyRequest) io.ReadCloser {
+	result := io.NopCloser(strings.NewReader(r.Body))
+	result.Close()
+
+	return result
+}
+
+func getHeaders(r *events.APIGatewayProxyRequest) http.Header {
+	result := http.Header{}
+	for k, v := range r.Headers {
+		result.Add(k, v)
+	}
+
+	return result
+}
+
+func getMultipartForm(r *events.APIGatewayProxyRequest, maxMemory int64) (*multipart.Form, error) {
+	ct := r.Headers["content-type"]
+	if len(ct) == 0 {
+		ct = r.Headers["Content-Type"]
+		if len(ct) == 0 {
+			return nil, ErrContentTypeHeaderMissing
+		}
+	}
+
+	if !strings.HasPrefix(ct, "multipart/") {
+		return nil, nil
+	}
+
+	mediatype, params, err := mime.ParseMediaType(ct)
+	if err != nil {
+		return nil, err
+	}
+
+	if !strings.HasPrefix(strings.ToLower(strings.TrimSpace(mediatype)), "multipart/") {
+		return nil, ErrContentTypeHeaderNotMultipart
+	}
+
+	boundary, ok := params["boundary"]
+	if !ok {
+		return nil, ErrContentTypeHeaderMissingBoundary
+	}
+
+	var reader io.Reader
+	if r.IsBase64Encoded {
+		decoded, err := base64.StdEncoding.DecodeString(r.Body)
+		if err != nil {
+			return nil, err
+		}
+		reader = bytes.NewReader(decoded)
+	} else {
+		reader = strings.NewReader(r.Body)
+	}
+
+	multipartReader := multipart.NewReader(reader, boundary)
+
+	form, err := multipartReader.ReadForm(maxMemory)
+	if err != nil {
+		return nil, err
+	}
+
+	return form, nil
+}
+
+func getRawPath(r *events.APIGatewayProxyRequest, hasPath bool) string {
+	var result string
+	if hasPath {
+		result = r.Path
+	}
+
+	q := url.Values{}
+	for k, v := range r.QueryStringParameters {
+		q.Add(k, v)
+	}
+
+	for k, vals := range r.MultiValueQueryStringParameters {
+		for _, v := range vals {
+			q.Add(k, v)
+		}
+	}
+
+	if len(q) > 0 {
+		if hasPath {
+			result = fmt.Sprintf("%s?", result)
+		}
+		result = fmt.Sprintf("%s%s", result, q.Encode())
+	}
+
+	return result
 }
 
 // type AWSRequest struct {
