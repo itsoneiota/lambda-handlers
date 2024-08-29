@@ -34,6 +34,10 @@ type Contexter interface {
 
 // BeforeHandlerHook is a callback function called before a handler functions main logic is ran.
 // A Callback function can be passed in when building a handler and is passed the raw API Gateway Request struct
-type BeforeHandlerHook func(Requester) error
+type BeforeHandlerHook func(res http.ResponseWriter, req *http.Request) bool
+
+// AfterHandlerHook is a callback function called after a handler functions main logic is ran.
+// A Callback function can be passed in when building a handler and is passed the raw API Gateway Request struct
+type AfterHandlerHook func(res http.ResponseWriter)
 
 type HandlerFunc = func(res http.ResponseWriter, req Requester) error

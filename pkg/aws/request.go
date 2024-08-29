@@ -22,99 +22,23 @@ var (
 	ErrContentTypeHeaderMissingBoundary = errors.New("content type header missing boundary error")
 )
 
-func NewHttpRequest(r *events.APIGatewayProxyRequest) (*http.Request, error) {
-	form, err := getMultipartForm(r, 32<<20) // 32 MB max memory
+func NewHttpRequest(
+	ctx context.Context,
+	r *events.APIGatewayProxyRequest,
+) (*http.Request, error) {
+	scheme := "https"
+	if v, ok := r.Headers["X-Forwarded-Proto"]; ok {
+		scheme = v
+	}
+
+	host := "example.com"
+	if v, ok := r.Headers["Host"]; ok {
+		host = v
+	}
+
+	parsedUrl, err := url.Parse(fmt.Sprintf("%s://%s%s", scheme, host, r.Path))
 	if err != nil {
 		return nil, err
-	}
-
-	req := &http.Request{
-		Method: r.HTTPMethod,
-		URL: &url.URL{
-			Scheme:   "https",
-			Path:     r.Path,
-			RawPath:  getRawPath(r, true),
-			RawQuery: getRawPath(r, false),
-		},
-		Header:        getHeaders(r),
-		Body:          getBody(r),
-		MultipartForm: form,
-	}
-
-	ctx := context.Background()
-	req.WithContext(ctx)
-
-	return req, nil
-}
-
-func getBody(r *events.APIGatewayProxyRequest) io.ReadCloser {
-	result := io.NopCloser(strings.NewReader(r.Body))
-	result.Close()
-
-	return result
-}
-
-func getHeaders(r *events.APIGatewayProxyRequest) http.Header {
-	result := http.Header{}
-	for k, v := range r.Headers {
-		result.Add(k, v)
-	}
-
-	return result
-}
-
-func getMultipartForm(r *events.APIGatewayProxyRequest, maxMemory int64) (*multipart.Form, error) {
-	ct := r.Headers["content-type"]
-	if len(ct) == 0 {
-		ct = r.Headers["Content-Type"]
-		if len(ct) == 0 {
-			return nil, ErrContentTypeHeaderMissing
-		}
-	}
-
-	if !strings.HasPrefix(ct, "multipart/") {
-		return nil, nil
-	}
-
-	mediatype, params, err := mime.ParseMediaType(ct)
-	if err != nil {
-		return nil, err
-	}
-
-	if !strings.HasPrefix(strings.ToLower(strings.TrimSpace(mediatype)), "multipart/") {
-		return nil, ErrContentTypeHeaderNotMultipart
-	}
-
-	boundary, ok := params["boundary"]
-	if !ok {
-		return nil, ErrContentTypeHeaderMissingBoundary
-	}
-
-	var reader io.Reader
-	if r.IsBase64Encoded {
-		decoded, err := base64.StdEncoding.DecodeString(r.Body)
-		if err != nil {
-			return nil, err
-		}
-		reader = bytes.NewReader(decoded)
-	} else {
-		reader = strings.NewReader(r.Body)
-	}
-
-	multipartReader := multipart.NewReader(reader, boundary)
-
-	form, err := multipartReader.ReadForm(maxMemory)
-	if err != nil {
-		return nil, err
-	}
-
-	return form, nil
-}
-
-func getRawPath(r *events.APIGatewayProxyRequest, hasPath bool) string {
-	var result string
-	if hasPath {
-		result = r.Path
 	}
 
 	q := url.Values{}
@@ -128,183 +52,65 @@ func getRawPath(r *events.APIGatewayProxyRequest, hasPath bool) string {
 		}
 	}
 
-	if len(q) > 0 {
-		if hasPath {
-			result = fmt.Sprintf("%s?", result)
+	parsedUrl.RawQuery = q.Encode()
+
+	var body io.ReadCloser
+	if r.IsBase64Encoded {
+		decodedBody, err := base64.StdEncoding.DecodeString(r.Body)
+		if err != nil {
+			return nil, err
 		}
-		result = fmt.Sprintf("%s%s", result, q.Encode())
+		body = io.NopCloser(bytes.NewReader(decodedBody))
+	} else {
+		body = io.NopCloser(strings.NewReader(r.Body))
 	}
 
-	return result
+	req, err := http.NewRequest(r.HTTPMethod, parsedUrl.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	for key, values := range r.MultiValueHeaders {
+		for _, value := range values {
+			req.Header.Add(key, value)
+		}
+	}
+
+	for key, value := range r.Headers {
+		req.Header.Set(key, value)
+	}
+
+	if r.RequestContext.Identity.SourceIP != "" {
+		req.RemoteAddr = r.RequestContext.Identity.SourceIP
+		if v, ok := r.Headers["X-Forwarded-Port"]; ok {
+			req.RemoteAddr = fmt.Sprintf("%s:%s", req.RemoteAddr, v)
+		}
+	}
+
+	if userAgent := r.RequestContext.Identity.UserAgent; userAgent != "" {
+		req.Header.Set("User-Agent", userAgent)
+	}
+
+	contentType := req.Header.Get("Content-Type")
+	if strings.HasPrefix(contentType, "multipart/form-data") {
+		mediaType, params, err := mime.ParseMediaType(contentType)
+		if err != nil {
+			return nil, err
+		}
+
+		if strings.HasPrefix(mediaType, "multipart/") {
+			mr := multipart.NewReader(body, params["boundary"])
+
+			multipartForm, err := mr.ReadForm(10 << 20) // 10MB max memory for the form
+			if err != nil {
+				return nil, err
+			}
+
+			req.MultipartForm = multipartForm
+		}
+	}
+
+	req.WithContext(ctx)
+
+	return req, nil
 }
-
-// type AWSRequest struct {
-// 	body            string
-// 	context         handler.Contexter
-// 	cookies         []*http.Cookie
-// 	headers         http.Header
-// 	isBase64Encoded bool
-// 	pathParams      map[string]string
-// 	queryParams     url.Values
-// }
-
-// func NewAWSRequest(r *events.APIGatewayProxyRequest) *AWSRequest {
-// 	headers := http.Header{}
-// 	for k, v := range r.Headers {
-// 		headers.Set(k, v)
-// 	}
-
-// 	values := url.Values{}
-// 	for k, v := range r.QueryStringParameters {
-// 		values.Set(k, v)
-// 	}
-
-// 	cookies := []*http.Cookie{}
-// 	c := headers.Get("Cookie")
-// 	if c == "" {
-// 		c = headers.Get("cookie")
-// 	}
-
-// 	if c != "" {
-// 		for _, cookie := range strings.Split(";", c) {
-// 			if s := strings.Split("=", cookie); len(s) > 1 {
-// 				cookies = append(cookies, &http.Cookie{
-// 					Name:  s[0],
-// 					Value: s[1],
-// 				})
-// 			}
-// 		}
-// 	}
-
-// 	return &AWSRequest{
-// 		body: r.Body,
-// 		context: &Context{
-// 			APIGatewayProxyRequestContext: r.RequestContext,
-// 		},
-// 		cookies:         cookies,
-// 		isBase64Encoded: r.IsBase64Encoded,
-// 		headers:         headers,
-// 		pathParams:      r.PathParameters,
-// 		queryParams:     values,
-// 	}
-// }
-
-// // Add cookie
-// func (r *AWSRequest) AddCookie(c *http.Cookie) {
-// 	r.cookies = append(r.cookies, c)
-// }
-
-// // Body gets request payload
-// func (r *AWSRequest) Body() string {
-// 	return r.body
-// }
-
-// // Get context
-// func (r *AWSRequest) Context() handler.Contexter {
-// 	return r.context
-// }
-
-// // Get cookie
-// func (r *AWSRequest) Cookie(name string) (*http.Cookie, error) {
-// 	var result *http.Cookie
-// 	for _, c := range r.cookies {
-// 		if c.Name == name {
-// 			result = c
-// 			break
-// 		}
-// 	}
-
-// 	return result, nil
-// }
-
-// // Get cookies
-// func (r *AWSRequest) Cookies() []*http.Cookie {
-// 	return r.cookies
-// }
-
-// // Get auth token from headers.
-// func (r *AWSRequest) GetAuthToken() string {
-// 	if v := r.Headers().Get("Authorization"); v != "" {
-// 		return v
-// 	}
-
-// 	return r.Headers().Get("authorization")
-// }
-
-// // Headers get the request headers
-// func (r *AWSRequest) Headers() http.Header {
-// 	return r.headers
-// }
-
-// // MultipartReader is an iterator over parts in a MIME multipart body
-// func (r *AWSRequest) MultipartReader() (*multipart.Reader, error) {
-// 	ct := r.headers.Get("content-type")
-// 	if len(ct) == 0 {
-// 		ct = r.headers.Get("Content-Type")
-// 		if len(ct) == 0 {
-// 			return nil, ErrContentTypeHeaderMissing
-// 		}
-// 	}
-
-// 	mediatype, params, err := mime.ParseMediaType(ct)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	if strings.Index(strings.ToLower(strings.TrimSpace(mediatype)), "multipart/") != 0 {
-// 		return nil, ErrContentTypeHeaderNotMultipart
-// 	}
-
-// 	boundary, ok := params["boundary"]
-// 	if !ok {
-// 		return nil, ErrContentTypeHeaderMissingBoundary
-// 	}
-
-// 	if r.isBase64Encoded {
-// 		decoded, err := base64.StdEncoding.DecodeString(r.body)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		return multipart.NewReader(bytes.NewReader(decoded), boundary), nil
-// 	}
-
-// 	return multipart.NewReader(strings.NewReader(r.body), boundary), nil
-// }
-
-// // PathByName gets a path parameter by its name eg. "productID"
-// func (r *AWSRequest) PathByName(name string) string {
-// 	return r.pathParams[name]
-// }
-
-// // QueryByName gets a query parameter by its name eg. "locale"
-// func (r *AWSRequest) QueryByName(name string) string {
-// 	return r.queryParams.Get(name)
-// }
-
-// // QueryByName gets all query parameters
-// func (r *AWSRequest) QueryParams() url.Values {
-// 	return r.queryParams
-// }
-
-// // Get referer
-// func (r *AWSRequest) Referer() string {
-// 	if v := r.Headers().Get("Referer"); v != "" {
-// 		return v
-// 	}
-
-// 	return r.Headers().Get("referer")
-// }
-
-// // Sets a query parameter against the request.
-// func (r *AWSRequest) SetQueryByName(name, set string) {
-// 	r.queryParams.Set(name, set)
-// }
-
-// // Get user agent
-// func (r *AWSRequest) UserAgent() string {
-// 	if v := r.Headers().Get("User-Agent"); v != "" {
-// 		return v
-// 	}
-
-// 	return r.Headers().Get("user-agent")
-// }

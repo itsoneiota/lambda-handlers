@@ -1,35 +1,53 @@
 package aws
 
 import (
+	"context"
 	"net/http"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/itsoneiota/lambda-handlers/pkg/handler"
 )
 
 type LambdaCallback = func(request *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error)
 
 func Start(
 	h http.HandlerFunc,
+	beforeHook handler.BeforeHandlerHook,
+	afterHook handler.AfterHandlerHook,
 	defaultHeaders http.Header,
 ) {
 	lambda.Start(
-		getHandler(h, defaultHeaders),
+		getHandler(h, beforeHook, afterHook, defaultHeaders),
 	)
 }
 
 func getHandler(
 	h http.HandlerFunc,
+	beforeHook handler.BeforeHandlerHook,
+	afterHook handler.AfterHandlerHook,
 	defaultHeaders http.Header,
 ) LambdaCallback {
 	return func(r *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 		resp := NewResponseWriter(defaultHeaders)
-		req, err := NewHttpRequest(r)
+		req, err := NewHttpRequest(context.Background(), r)
 		if err != nil {
 			return nil, err
 		}
-		h(resp, req)
+
+		cnt := true
+		if beforeHook != nil {
+			cnt = beforeHook(resp, req)
+		}
+
+		if cnt {
+			h(resp, req)
+
+			if (resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusMultipleChoices) && afterHook != nil {
+				afterHook(resp)
+			}
+		}
 
 		return NewEvent(resp), nil
 	}

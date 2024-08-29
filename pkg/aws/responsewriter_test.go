@@ -4,20 +4,37 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestNewResponseWriter(t *testing.T) {
-	headers := http.Header{}
-	headers.Add("Content-Type", "application/json")
-	r := NewResponseWriter(headers)
+type ResponseWriterSuite struct {
+	suite.Suite
+	headers http.Header
+}
 
-	assert.IsType(t, &ResponseWriter{}, r)
-	assert.NotEmpty(t, r.Headers)
+func (s *ResponseWriterSuite) SetupTest() {
+	s.headers = http.Header{
+		"Content-Type": []string{
+			"application/json; charset=utf-8",
+		},
+	}
+}
+
+func (s *ResponseWriterSuite) TestNewResponseWriter() {
+	r := NewResponseWriter(s.headers)
+
+	s.IsType(&ResponseWriter{}, r)
+	s.NotEmpty(r.Headers)
 
 	r.Write([]byte("foo"))
-	assert.NotEmpty(t, r.Body)
+	s.NotEmpty(r.Body)
 
 	r.WriteHeader(http.StatusOK)
-	assert.Equal(t, http.StatusOK, r.StatusCode)
+	s.Equal(http.StatusOK, r.StatusCode)
+}
+
+// In order for 'go test' to run this suite, we need to create
+// a normal test function and pass our suite to suite.Run
+func TestResponseWriterSuite(t *testing.T) {
+	suite.Run(t, new(ResponseWriterSuite))
 }

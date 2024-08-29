@@ -1,61 +1,73 @@
 package example
 
 import (
-	"log/slog"
+	"fmt"
 	"net/http"
+	"net/url"
 	"testing"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/itsoneiota/lambda-handlers/internal/mocks"
 	"github.com/itsoneiota/lambda-handlers/pkg/aws"
 	"github.com/itsoneiota/lambda-handlers/pkg/handler"
-	"github.com/itsoneiota/lambda-handlers/pkg/test"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestFind_AWS(t *testing.T) {
-	expectToken := "authToken"
-	model := ExampleModel{}
-	expectQuery := "POSTCODE"
-	awsReq := &events.APIGatewayProxyRequest{
-		Path: "test/123",
-		QueryStringParameters: map[string]string{
-			"postcode": expectQuery,
+type FindHandlerSuite struct {
+	suite.Suite
+	token string
+	resp  ExampleModel
+	query string
+	req   *http.Request
+}
+
+func (s *FindHandlerSuite) SetupTest() {
+	s.token = "authToken"
+	s.resp = ExampleModel{}
+	s.query = "POSTCODE"
+	s.req = &http.Request{
+		Method: http.MethodGet,
+		URL: &url.URL{
+			Path:     "find",
+			RawQuery: fmt.Sprintf("postcode=%s", s.query),
 		},
-		Headers: map[string]string{
-			"Accept":        "application/json",
-			"Authorization": expectToken,
+		Header: http.Header{
+			"Accept":        {"application/json"},
+			"Authorization": {s.token},
 		},
 	}
-	req := aws.NewAWSRequest(awsReq)
 
-	// Mocks
+}
+
+func (s *FindHandlerSuite) Connector() Connector {
 	c := new(mocks.Connector)
+
 	c.On("Authorize",
-		expectToken,
+		s.token,
 	).Return(
 		nil,
 	).Times(1)
 
 	c.On("Find",
-		expectQuery,
+		s.query,
 	).Return(
-		model,
+		s.resp,
 		nil,
 	).Times(1)
 
-	l := test.NewNullLogger()
-	slog.SetDefault(l)
+	return c
+}
 
-	headers := http.Header{}
-	headers.Set("Content-Type", "application/json")
-
+func (s *FindHandlerSuite) TestHandler() {
 	resHander := handler.NewResponseHandler()
-	res := aws.NewResponseWriter(headers)
+	res := aws.NewResponseWriter(
+		http.Header{
+			"Content-Type": {"application/json"},
+		},
+	)
 
 	// Asserts
-	err := FindHandler(resHander, c, nil, nil)(res, req)
-	assert.NoError(t, err)
+	FindHandler(resHander, s.Connector(), nil, nil)(res, s.req)
 
 	awsRes := aws.NewEvent(res)
 	expectAwsRes := &events.APIGatewayProxyResponse{
@@ -66,7 +78,12 @@ func TestFind_AWS(t *testing.T) {
 		IsBase64Encoded:   false,
 	}
 
-	assert.IsType(t, &events.APIGatewayProxyResponse{}, awsRes)
-	assert.Equal(t, expectAwsRes, awsRes)
+	s.IsType(&events.APIGatewayProxyResponse{}, awsRes)
+	s.Equal(expectAwsRes, awsRes)
+}
 
+// In order for 'go test' to run this suite, we need to create
+// a normal test function and pass our suite to suite.Run
+func TestFindHandlerSuite(t *testing.T) {
+	suite.Run(t, new(FindHandlerSuite))
 }

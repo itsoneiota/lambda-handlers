@@ -1,116 +1,68 @@
 package handler
 
 import (
-	"log/slog"
 	"net/http"
 	"testing"
 
-	"github.com/itsoneiota/lambda-handlers/pkg/test"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
-type reponseWriter struct {
-	Headers http.Header
-	Body    []byte
-	Status  int
+type ResponseHandlerSuite struct {
+	suite.Suite
+	status  int
+	body    string
+	headers http.Header
+	resp    *reponseWriter
+	handler *ResponseHandler
 }
 
-func (r *reponseWriter) Header() http.Header {
-	if r.Headers == nil {
-		r.Headers = http.Header{}
+func (s *ResponseHandlerSuite) SetupTest() {
+	s.status = http.StatusOK
+	s.body = "model"
+	s.headers = http.Header{}
+	s.headers.Add("default", "header")
+	s.resp = &reponseWriter{
+		Headers: s.headers,
 	}
-
-	return r.Headers
+	s.handler = NewResponseHandler()
 }
 
-func (r *reponseWriter) Write(body []byte) (int, error) {
-	r.Body = body
+func (s *ResponseHandlerSuite) TestBuildResponder() {
+	err := s.handler.BuildResponder(s.resp, s.status, s.body)
+	s.NoError(err)
 
-	return len(body), nil
+	s.Equal(s.status, s.resp.Status)
+	s.Equal(s.body, string(s.resp.Body))
+	s.Equal("header", s.resp.Headers.Get("default"))
 }
 
-func (r *reponseWriter) WriteHeader(status int) {
-	r.Status = status
+func (s *ResponseHandlerSuite) TestBuildResponseWithHeader_Empty() {
+	err := s.handler.BuildResponseWithHeader(s.resp, s.status, nil, nil)
+	s.NoError(err)
+
+	s.Equal(s.status, s.resp.Status)
+	s.Equal("", string(s.resp.Body))
+	s.Equal("header", s.resp.Headers.Get("default"))
 }
 
-type Model struct {
-	Success bool `json:"success"`
-}
-
-func TestBuildResponder(t *testing.T) {
-	body := "model"
-	code := 200
-	headers := http.Header{}
-	headers.Set("default", "header")
-
-	l := test.NewNullLogger()
-	slog.SetDefault(l)
-
-	hand := NewResponseHandler()
-	res := &reponseWriter{
-		Headers: headers,
-	}
-
-	err := hand.BuildResponderWithHeader(res, code, body, nil)
-	assert.NoError(t, err)
-
-	assert.Equal(t, 200, res.Status)
-	assert.Equal(t, body, string(res.Body))
-	assert.Equal(t, "header", res.Headers.Get("Default"))
-}
-
-func TestBuildResponseWithHeader_Empty(t *testing.T) {
-	code := 200
-	headers := http.Header{}
-	headers.Set("default", "header")
-
-	l := test.NewNullLogger()
-	slog.SetDefault(l)
-
-	hand := NewResponseHandler()
-	res := &reponseWriter{
-		Headers: headers,
-	}
-
-	err := hand.BuildResponseWithHeader(res, code, nil, nil)
-	assert.NoError(t, err)
-
-	assert.Equal(t, 200, res.Status)
-	assert.Equal(t, "", string(res.Body))
-	assert.Equal(t, "header", res.Headers.Get("Default"))
-}
-
-func TestBuildResponseWithHeader(t *testing.T) {
+func (s *ResponseHandlerSuite) TestBuildResponseWithHeader() {
 	model := Model{
 		Success: true,
 	}
 
-	code := 200
-	headers := http.Header{}
-	headers.Set("default", "header")
+	err := s.handler.BuildResponseWithHeader(s.resp, s.status, model, nil)
+	s.NoError(err)
 
-	l := test.NewNullLogger()
-	slog.SetDefault(l)
-
-	hand := NewResponseHandler()
-	res := &reponseWriter{
-		Headers: headers,
-	}
-
-	err := hand.BuildResponseWithHeader(res, code, model, nil)
-	assert.NoError(t, err)
-
-	assert.Equal(t, 200, res.Status)
-	assert.Equal(t, `{"success":true}`, string(res.Body))
-	assert.Equal(t, "header", res.Headers.Get("Default"))
+	s.Equal(s.status, s.resp.Status)
+	s.Equal(`{"success":true}`, string(s.resp.Body))
+	s.Equal("header", s.resp.Headers.Get("default"))
 }
 
-func TestBuildResponseWithHeader_Multiple(t *testing.T) {
+func (s *ResponseHandlerSuite) TestBuildResponseWithHeader_Multiple() {
 	model := Model{
 		Success: true,
 	}
 
-	code := 200
 	headers := http.Header{
 		"Server-Timing": []string{
 			"cdn-cache; desc=HIT",
@@ -119,23 +71,19 @@ func TestBuildResponseWithHeader_Multiple(t *testing.T) {
 		},
 	}
 
-	hand := NewResponseHandler()
-	res := &reponseWriter{}
+	err := s.handler.BuildResponseWithHeader(s.resp, s.status, model, headers)
+	s.NoError(err)
 
-	err := hand.BuildResponseWithHeader(res, code, model, headers)
-	assert.NoError(t, err)
-
-	assert.Equal(t, 200, res.Status)
-	assert.Equal(t, `{"success":true}`, string(res.Body))
-	assert.Equal(t, 3, len(res.Headers["Server-Timing"]))
+	s.Equal(s.status, s.resp.Status)
+	s.Equal(`{"success":true}`, string(s.resp.Body))
+	s.Equal(3, len(s.resp.Headers["Server-Timing"]))
 }
 
-func TestBuildResponseWithHeader_Cookie(t *testing.T) {
+func (s *ResponseHandlerSuite) TestBuildResponseWithHeader_Cookie() {
 	model := Model{
 		Success: true,
 	}
 
-	code := 200
 	headers := http.Header{
 		"Set-Cookie": []string{
 			"loggedIn=True; path=/; secure",
@@ -145,14 +93,15 @@ func TestBuildResponseWithHeader_Cookie(t *testing.T) {
 		},
 	}
 
-	l := test.NewNullLogger()
-	slog.SetDefault(l)
+	err := s.handler.BuildResponseWithHeader(s.resp, s.status, model, headers)
+	s.NoError(err)
 
-	hand := NewResponseHandler()
-	res := &reponseWriter{}
+	headers.Add("default", "header")
+	s.Equal(headers, s.resp.Headers)
+}
 
-	err := hand.BuildResponseWithHeader(res, code, model, headers)
-
-	assert.NoError(t, err)
-	assert.Equal(t, headers, res.Headers)
+// In order for 'go test' to run this suite, we need to create
+// a normal test function and pass our suite to suite.Run
+func TestResponseHandlerSuite(t *testing.T) {
+	suite.Run(t, new(ResponseHandlerSuite))
 }
