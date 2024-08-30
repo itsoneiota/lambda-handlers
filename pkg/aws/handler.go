@@ -37,7 +37,7 @@ func getHandler(
 			return nil, err
 		}
 
-		vars := make(map[string]string)
+		vars := map[string]string{}
 		for key, value := range r.PathParameters {
 			vars[key] = value
 		}
