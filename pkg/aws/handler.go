@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/gorilla/mux"
 	"github.com/itsoneiota/lambda-handlers/pkg/handler"
 )
 
@@ -35,6 +36,12 @@ func getHandler(
 		if err != nil {
 			return nil, err
 		}
+
+		vars := make(map[string]string)
+		for key, value := range r.PathParameters {
+			vars[key] = value
+		}
+		req = mux.SetURLVars(req, vars)
 
 		cnt := true
 		if beforeHook != nil {
