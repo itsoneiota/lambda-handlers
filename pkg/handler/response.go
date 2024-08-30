@@ -59,9 +59,9 @@ func (r *ResponseHandler) BuildResponderWithHeader(
 	}
 
 	res.WriteHeader(code)
-	res.Write([]byte(body))
+	_, err := res.Write([]byte(body))
 
-	return nil
+	return err
 }
 
 // BuildResponder builds an Response with the given status code & response body

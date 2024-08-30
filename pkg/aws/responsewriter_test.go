@@ -46,6 +46,19 @@ func (s *ResponseWriterSuite) TestErrorResponse() {
 	s.Equal("{\"error\":{\"id\":\"BAD_REQUEST\",\"code\":\"BAD_REQUEST\",\"message\":\"Oops\"}}", r.Body)
 }
 
+func (s *ResponseWriterSuite) TestWrapperString() {
+	r := NewResponseWriter(s.headers)
+
+	s.IsType(&ResponseWriter{}, r)
+	s.NotEmpty(r.Headers)
+
+	r.WriteHeader(http.StatusBadRequest)
+	s.Equal(http.StatusBadRequest, r.StatusCode)
+
+	r.Write([]byte("\"Oops\"\n"))
+	s.Equal("{\"error\":{\"id\":\"BAD_REQUEST\",\"code\":\"BAD_REQUEST\",\"message\":\"Oops\"}}", r.Body)
+}
+
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestResponseWriterSuite(t *testing.T) {
