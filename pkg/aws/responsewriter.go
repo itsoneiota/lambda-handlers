@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -35,11 +36,32 @@ func (w *ResponseWriter) Header() http.Header {
 }
 
 func (w *ResponseWriter) Write(body []byte) (int, error) {
-	w.Body = string(body)
+	bodyStr := string(body)
+	if !isOkRange(w.StatusCode) && !isValidJSON(bodyStr) {
+		e := NewServiceError(
+			GetServiceErrorCode(w.StatusCode),
+			GetServiceErrorCode(w.StatusCode),
+			bodyStr,
+		)
+
+		b, err := json.Marshal(e)
+		if err != nil {
+			return 0, err
+		}
+
+		bodyStr = string(b)
+	}
+
+	w.Body = bodyStr
 
 	return len(body), nil
 }
 
 func (w *ResponseWriter) WriteHeader(statusCode int) {
 	w.StatusCode = statusCode
+}
+
+func isValidJSON(s string) bool {
+	var js json.RawMessage
+	return json.Unmarshal([]byte(s), &js) == nil
 }

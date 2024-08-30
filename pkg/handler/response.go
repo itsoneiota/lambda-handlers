@@ -58,8 +58,8 @@ func (r *ResponseHandler) BuildResponderWithHeader(
 		}
 	}
 
-	res.Write([]byte(body))
 	res.WriteHeader(code)
+	res.Write([]byte(body))
 
 	return nil
 }

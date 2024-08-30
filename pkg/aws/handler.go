@@ -51,7 +51,7 @@ func getHandler(
 		if cnt {
 			h(resp, req)
 
-			if (resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusMultipleChoices) && afterHook != nil {
+			if isOkRange(resp.StatusCode) && afterHook != nil {
 				afterHook(resp)
 			}
 		}
@@ -91,4 +91,8 @@ func unique(slice []string) []string {
 	}
 
 	return result
+}
+
+func isOkRange(statusCode int) bool {
+	return statusCode >= http.StatusOK && statusCode < http.StatusMultipleChoices
 }

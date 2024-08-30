@@ -26,11 +26,24 @@ func (s *ResponseWriterSuite) TestNewResponseWriter() {
 	s.IsType(&ResponseWriter{}, r)
 	s.NotEmpty(r.Headers)
 
-	r.Write([]byte("foo"))
-	s.NotEmpty(r.Body)
-
 	r.WriteHeader(http.StatusOK)
 	s.Equal(http.StatusOK, r.StatusCode)
+
+	r.Write([]byte("foo"))
+	s.Equal("foo", r.Body)
+}
+
+func (s *ResponseWriterSuite) TestErrorResponse() {
+	r := NewResponseWriter(s.headers)
+
+	s.IsType(&ResponseWriter{}, r)
+	s.NotEmpty(r.Headers)
+
+	r.WriteHeader(http.StatusBadRequest)
+	s.Equal(http.StatusBadRequest, r.StatusCode)
+
+	r.Write([]byte("Oops"))
+	s.Equal("{\"error\":{\"id\":\"BAD_REQUEST\",\"code\":\"BAD_REQUEST\",\"message\":\"Oops\"}}", r.Body)
 }
 
 // In order for 'go test' to run this suite, we need to create
