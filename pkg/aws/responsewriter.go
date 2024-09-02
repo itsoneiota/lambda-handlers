@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/itsoneiota/lambda-handlers/pkg/serviceerror"
 )
 
 type ResponseWriter struct {
@@ -44,9 +45,9 @@ func (w *ResponseWriter) Write(body []byte) (int, error) {
 			bodyStr = decodedString
 		}
 
-		e := NewServiceError(
-			GetServiceErrorCode(w.StatusCode),
-			GetServiceErrorCode(w.StatusCode),
+		e := serviceerror.NewServiceError(
+			serviceerror.GetServiceErrorCode(w.StatusCode),
+			serviceerror.GetServiceErrorCode(w.StatusCode),
 			bodyStr,
 		)
 
