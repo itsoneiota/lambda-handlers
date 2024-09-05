@@ -24,7 +24,6 @@ const (
 
 // StatusCodes mapped to the error codes
 var StatusCodes = map[string]int{
-	CodeDefault:             http.StatusInternalServerError,
 	CodeInternalServerError: http.StatusInternalServerError,
 	CodeNotImplemented:      http.StatusNotImplemented,
 	CodeUnprocessableEntity: http.StatusUnprocessableEntity,
