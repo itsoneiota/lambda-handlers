@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/itsoneiota/lambda-handlers/pkg/serviceerror"
+	"github.com/itsoneiota/lambda-handlers/v2/pkg/serviceerror"
 )
 
 type ResponseWriter struct {

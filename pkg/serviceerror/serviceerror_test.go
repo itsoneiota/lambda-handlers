@@ -33,9 +33,7 @@ func (s *ServiceErrorSuite) TestGetStatusCode() {
 		errorCode  string
 		statusCode int
 	}{
-		{"UNKNOWN", http.StatusInternalServerError},
 		{CodeInternalServerError, http.StatusInternalServerError},
-		{CodeDefault, http.StatusInternalServerError},
 		{CodeNotFound, http.StatusNotFound},
 		{CodeBadRequest, http.StatusBadRequest},
 		{CodeNotImplemented, http.StatusNotImplemented},
@@ -57,7 +55,7 @@ func (s *ServiceErrorSuite) TestCanCreateNewFromExistingError() {
 	sut := NewFromErr(err, "error")
 	expected := "error: an error occurred"
 	s.Equal(expected, sut.Error(), "Error message did not match expected")
-	s.Equal(sut.Code(), CodeDefault, "Error code did not match expected")
+	s.Equal(sut.Code(), CodeInternalServerError, "Error code did not match expected")
 	// New from service error
 	err = NewServiceError(CodeNotFound, CodeNotFound, "not found")
 	sut = NewFromErr(err, "error")
@@ -71,7 +69,6 @@ func (s *ServiceErrorSuite) TestConvenienceMethods() {
 		method       func(string) *ServiceError
 		expectedType string
 	}{
-		{Unknown, CodeUnknown},
 		{InternalServerError, CodeInternalServerError},
 		{NotImplemented, CodeNotImplemented},
 		{UnprocessableEntity, CodeUnprocessableEntity},
@@ -97,7 +94,6 @@ func (s *ServiceErrorSuite) TestGetDefaultErrorMessage() {
 		method       func(string) *ServiceError
 		expectedType string
 	}{
-		{Unknown, CodeUnknown},
 		{InternalServerError, CodeInternalServerError},
 		{NotImplemented, CodeNotImplemented},
 		{UnprocessableEntity, CodeUnprocessableEntity},

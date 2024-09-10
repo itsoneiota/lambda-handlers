@@ -16,7 +16,7 @@ package example
 import (
 	"net/http"
 
-	"github.com/itsoneiota/lambda-handlers/pkg/handler"
+	"github.com/itsoneiota/lambda-handlers/v2/pkg/handler"
 )
 
 type ExampleModel struct {

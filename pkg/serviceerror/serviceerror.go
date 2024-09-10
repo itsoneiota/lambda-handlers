@@ -7,7 +7,6 @@ import (
 
 // Error codes
 const (
-	CodeDefault             = CodeUnknown
 	CodeUnknown             = "UNKNOWN_ERROR"
 	CodeInternalServerError = "INTERNAL_SERVER_ERROR"
 	CodeNotImplemented      = "NOT_IMPLEMENTED"
@@ -39,7 +38,6 @@ var StatusCodes = map[string]int{
 
 // defaultErrorMessages are default error messages if we are unable to get a message from the client error.
 var defaultErrorMessages = map[string]string{
-	CodeUnknown:             "Unknown",
 	CodeInternalServerError: "Internal Service Error",
 	CodeNotImplemented:      "Not Implemented",
 	CodeUnprocessableEntity: "Unprocessable Entity",
@@ -77,7 +75,7 @@ func (se *ServiceError) Code() string {
 
 // StatusCode returns the errors StatusCode
 func (se *ServiceError) StatusCode() int {
-	respCode := StatusCodes[CodeDefault]
+	respCode := http.StatusInternalServerError
 	if val, ok := StatusCodes[se.Err.Code]; ok {
 		respCode = val
 	}
@@ -101,7 +99,7 @@ func NewServiceError(id, code, message string) *ServiceError {
 
 // NewFromErr returns a new service error built from an existing error
 func NewFromErr(err error, message string) *ServiceError {
-	code := CodeDefault
+	code := CodeInternalServerError
 	if e, ok := err.(*ServiceError); ok {
 		code = e.Code()
 	}
@@ -111,11 +109,6 @@ func NewFromErr(err error, message string) *ServiceError {
 			Message: fmt.Sprintf("%s: %s", message, err.Error()),
 		},
 	}
-}
-
-// Unknown is a helper method for creating a service error with an 'Unknown' code
-func Unknown(message string) *ServiceError {
-	return NewServiceError(CodeUnknown, CodeUnknown, message)
 }
 
 // InternalServerError is a helper method for creating a service error with an 'InternalServerError' code
