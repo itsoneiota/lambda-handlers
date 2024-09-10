@@ -5,10 +5,10 @@ import (
 	"net/http"
 
 	muxRouter "github.com/gorilla/mux"
-	"github.com/itsoneiota/lambda-handlers/internal/mocks"
-	"github.com/itsoneiota/lambda-handlers/pkg/example"
-	"github.com/itsoneiota/lambda-handlers/pkg/handler"
-	"github.com/itsoneiota/lambda-handlers/pkg/mux"
+	"github.com/itsoneiota/lambda-handlers/v2/internal/mocks"
+	"github.com/itsoneiota/lambda-handlers/v2/pkg/example"
+	"github.com/itsoneiota/lambda-handlers/v2/pkg/handler"
+	"github.com/itsoneiota/lambda-handlers/v2/pkg/mux"
 )
 
 func main() {
@@ -33,7 +33,7 @@ func main() {
 		nil,
 	).Times(1)
 
-	resHander := handler.NewResponseHandler(http.Header{})
+	resHander := handler.NewResponseHandler()
 
 	r := muxRouter.NewRouter()
 	r.HandleFunc("/test", mux.CreateHandler(example.FindHandler(resHander, c, nil, nil)))

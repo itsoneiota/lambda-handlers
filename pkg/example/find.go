@@ -1,9 +1,11 @@
 package example
 
 import (
+	"errors"
 	"net/http"
+	"net/url"
 
-	"github.com/itsoneiota/lambda-handlers/pkg/handler"
+	"github.com/itsoneiota/lambda-handlers/v2/pkg/handler"
 )
 
 type ExampleModel struct {
@@ -27,32 +29,36 @@ func FindHandler(
 	connector Connector,
 	beforeHook handler.BeforeHandlerHook,
 	afterHook AfterFindHandlerHook,
-) handler.HandlerFunc {
-	return func(ctx handler.Contexter, request handler.Requester) (*handler.Response, error) {
-		if beforeHook != nil {
-			if err := beforeHook(request); err != nil {
-				return resHander.BuildErrorResponse(err)
-			}
-		}
-
-		token := request.GetAuthToken()
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		token := req.Header.Get("Authorization")
 		if err := connector.Authorize(token); err != nil {
-			return resHander.BuildErrorResponse(err)
+			resHander.BuildErrorResponse(w, err)
 		}
 
-		postcode := request.QueryByName("postcode")
+		query, err := url.ParseQuery(req.URL.RawQuery)
+		if err != nil {
+			resHander.BuildErrorResponse(w, err)
+		}
+
+		var postcode string
+		if query.Has("postcode") {
+			postcode = query.Get("postcode")
+		} else {
+			resHander.BuildErrorResponse(w, errors.New("postcode required"))
+		}
 
 		addresses, err := connector.Find(postcode)
 		if err != nil {
-			return resHander.BuildErrorResponse(err)
+			resHander.BuildErrorResponse(w, err)
 		}
 
 		if afterHook != nil {
 			if err := afterHook(addresses); err != nil {
-				return resHander.BuildErrorResponse(err)
+				resHander.BuildErrorResponse(w, err)
 			}
 		}
 
-		return resHander.BuildResponse(http.StatusOK, addresses)
+		resHander.BuildResponse(w, http.StatusOK, addresses)
 	}
 }

@@ -2,8 +2,11 @@ package aws
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"errors"
+	"fmt"
+	"io"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -19,105 +22,95 @@ var (
 	ErrContentTypeHeaderMissingBoundary = errors.New("content type header missing boundary error")
 )
 
-type AWSRequest struct {
-	body            string
-	pathParams      map[string]string
-	queryParams     url.Values
-	headers         http.Header
-	isBase64Encoded bool
-}
-
-func NewAWSRequest(r *events.APIGatewayProxyRequest) *AWSRequest {
-	headers := http.Header{}
-	for k, v := range r.Headers {
-		headers.Set(k, v)
+func NewHttpRequest(
+	ctx context.Context,
+	r *events.APIGatewayProxyRequest,
+) (*http.Request, error) {
+	scheme := "https"
+	if v, ok := r.Headers["X-Forwarded-Proto"]; ok {
+		scheme = v
 	}
 
-	values := url.Values{}
-	for k, v := range r.QueryStringParameters {
-		values.Set(k, v)
+	host := "example.com"
+	if v, ok := r.Headers["Host"]; ok {
+		host = v
 	}
 
-	return &AWSRequest{
-		body:            r.Body,
-		pathParams:      r.PathParameters,
-		queryParams:     values,
-		headers:         headers,
-		isBase64Encoded: r.IsBase64Encoded,
-	}
-}
-
-// Body gets request payload
-func (r *AWSRequest) Body() string {
-	return r.body
-}
-
-// Headers get the request headers
-func (r *AWSRequest) Headers() http.Header {
-	return r.headers
-}
-
-// MultipartReader is an iterator over parts in a MIME multipart body
-func (r *AWSRequest) MultipartReader() (*multipart.Reader, error) {
-	ct := r.headers.Get("content-type")
-	if len(ct) == 0 {
-		ct = r.headers.Get("Content-Type")
-		if len(ct) == 0 {
-			return nil, ErrContentTypeHeaderMissing
-		}
-	}
-
-	mediatype, params, err := mime.ParseMediaType(ct)
+	parsedUrl, err := url.Parse(fmt.Sprintf("%s://%s%s", scheme, host, r.Path))
 	if err != nil {
 		return nil, err
 	}
 
-	if strings.Index(strings.ToLower(strings.TrimSpace(mediatype)), "multipart/") != 0 {
-		return nil, ErrContentTypeHeaderNotMultipart
+	q := url.Values{}
+	for k, v := range r.QueryStringParameters {
+		q.Add(k, v)
 	}
 
-	boundary, ok := params["boundary"]
-	if !ok {
-		return nil, ErrContentTypeHeaderMissingBoundary
+	for k, vals := range r.MultiValueQueryStringParameters {
+		for _, v := range vals {
+			q.Add(k, v)
+		}
 	}
 
-	if r.isBase64Encoded {
-		decoded, err := base64.StdEncoding.DecodeString(r.body)
+	parsedUrl.RawQuery = q.Encode()
+
+	var body io.ReadCloser
+	if r.IsBase64Encoded {
+		decodedBody, err := base64.StdEncoding.DecodeString(r.Body)
 		if err != nil {
 			return nil, err
 		}
-		return multipart.NewReader(bytes.NewReader(decoded), boundary), nil
-	}
-
-	return multipart.NewReader(strings.NewReader(r.body), boundary), nil
-}
-
-// PathByName gets a path parameter by its name eg. "productID"
-func (r *AWSRequest) PathByName(name string) string {
-	return r.pathParams[name]
-}
-
-// QueryByName gets a query parameter by its name eg. "locale"
-func (r *AWSRequest) QueryByName(name string) string {
-	return r.queryParams.Get(name)
-}
-
-// QueryByName gets a query parameter by its name eg. "locale"
-func (r *AWSRequest) QueryParams() url.Values {
-	return r.queryParams
-}
-
-// PathByName sets a query parameter by its name eg. "locale"
-// This is used to alter requests in middleware functions.
-func (r *AWSRequest) SetQueryByName(name, set string) {
-	r.queryParams.Set(name, set)
-}
-
-// PathByName gets a query parameter by its name eg. "locale"
-func (r *AWSRequest) GetAuthToken() string {
-	if r.Headers().Get("Authorization") != "" {
-		return r.Headers().Get("Authorization")
+		body = io.NopCloser(bytes.NewReader(decodedBody))
 	} else {
-		return r.Headers().Get("authorization")
+		body = io.NopCloser(strings.NewReader(r.Body))
 	}
+
+	req, err := http.NewRequest(r.HTTPMethod, parsedUrl.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	for key, values := range r.MultiValueHeaders {
+		for _, value := range values {
+			req.Header.Add(key, value)
+		}
+	}
+
+	for key, value := range r.Headers {
+		req.Header.Set(key, value)
+	}
+
+	if r.RequestContext.Identity.SourceIP != "" {
+		req.RemoteAddr = r.RequestContext.Identity.SourceIP
+		if v, ok := r.Headers["X-Forwarded-Port"]; ok {
+			req.RemoteAddr = fmt.Sprintf("%s:%s", req.RemoteAddr, v)
+		}
+	}
+
+	if userAgent := r.RequestContext.Identity.UserAgent; userAgent != "" {
+		req.Header.Set("User-Agent", userAgent)
+	}
+
+	contentType := req.Header.Get("Content-Type")
+	if strings.HasPrefix(contentType, "multipart/form-data") {
+		mediaType, params, err := mime.ParseMediaType(contentType)
+		if err != nil {
+			return nil, err
+		}
+
+		if strings.HasPrefix(mediaType, "multipart/") {
+			mr := multipart.NewReader(body, params["boundary"])
+
+			multipartForm, err := mr.ReadForm(10 << 20) // 10MB max memory for the form
+			if err != nil {
+				return nil, err
+			}
+
+			req.MultipartForm = multipartForm
+		}
+	}
+
+	req.WithContext(ctx)
+
+	return req, nil
 }

@@ -1,4 +1,4 @@
-module github.com/itsoneiota/lambda-handlers
+module github.com/itsoneiota/lambda-handlers/v2
 
 go 1.21.3
 

@@ -8,66 +8,84 @@ import (
 
 // Genertic Handler object which is the reciever in every handler method
 type ResponseHandler struct {
-	defaultHeaders http.Header
+	res http.ResponseWriter
 }
 
-func NewResponseHandler(
-	defaultHeads http.Header,
-) *ResponseHandler {
-	return &ResponseHandler{
-		defaultHeaders: defaultHeads,
-	}
+func NewResponseHandler() *ResponseHandler {
+	return &ResponseHandler{}
 }
 
 // BuildResponseWithHeader creates an output Response with header
-func (r *ResponseHandler) BuildResponseWithHeader(code int, model interface{}, headers http.Header) (*Response, error) {
+func (r *ResponseHandler) BuildResponseWithHeader(
+	res http.ResponseWriter,
+	code int,
+	model interface{},
+	headers http.Header,
+) error {
 	body := ""
 	if model != nil {
 		bodyBytes, err := json.Marshal(model)
 		if err != nil {
-			return &Response{StatusCode: http.StatusInternalServerError}, err
+			return err
 		}
 
 		body = string(bodyBytes)
 	}
 
-	return r.BuildResponderWithHeader(code, body, headers)
+	return r.BuildResponderWithHeader(res, code, body, headers)
 }
 
 // BuildResponse creates an output Response
-func (r *ResponseHandler) BuildResponse(code int, model interface{}) (*Response, error) {
-	return r.BuildResponseWithHeader(code, model, http.Header{})
+func (r *ResponseHandler) BuildResponse(
+	res http.ResponseWriter,
+	code int,
+	model interface{},
+) error {
+	return r.BuildResponseWithHeader(res, code, model, http.Header{})
 }
 
 // BuildResponderWithHeader builds an Response with the given status code & response body
 // The Response will contain the raw response body and appropriate JSON header
-func (r *ResponseHandler) BuildResponderWithHeader(code int, body string, inputHeaders http.Header) (*Response, error) {
-	if inputHeaders != nil {
-		for defKey, defVals := range r.defaultHeaders {
-			for _, v := range defVals {
-				inputHeaders.Add(defKey, v)
-			}
+func (r *ResponseHandler) BuildResponderWithHeader(
+	res http.ResponseWriter,
+	code int,
+	body string,
+	inputHeaders http.Header,
+) error {
+	for k, vals := range inputHeaders {
+		for _, v := range vals {
+			res.Header().Add(k, v)
 		}
 	}
 
-	return &Response{
-		StatusCode: code,
-		Body:       body,
-		Headers:    inputHeaders,
-	}, nil
+	res.WriteHeader(code)
+	_, err := res.Write([]byte(body))
+
+	return err
 }
 
 // BuildResponder builds an Response with the given status code & response body
 // The Response will contain the raw response body and appropriate JSON header
-func (r *ResponseHandler) BuildResponder(code int, body string) (*Response, error) {
-	return r.BuildResponderWithHeader(code, body, http.Header{})
+func (r *ResponseHandler) BuildResponder(
+	res http.ResponseWriter,
+	code int,
+	body string,
+) error {
+	return r.BuildResponderWithHeader(res, code, body, http.Header{})
 }
 
-func (r *ResponseHandler) BuildErrorResponse(err error) (*Response, error) {
-	return r.BuildErrorResponseWithHeader(err, http.Header{})
+func (r *ResponseHandler) BuildErrorResponse(
+	res http.ResponseWriter,
+	err error,
+) error {
+	return r.BuildErrorResponseWithHeader(res, err, http.Header{})
 }
 
-func (r *ResponseHandler) BuildErrorResponseWithHeader(err error, headers http.Header) (*Response, error) {
+func (r *ResponseHandler) BuildErrorResponseWithHeader(
+	res http.ResponseWriter,
+	err error,
+	headers http.Header,
+) error {
 	statusCode := http.StatusInternalServerError
 	var serviceErr error
 
@@ -92,7 +110,7 @@ func (r *ResponseHandler) BuildErrorResponseWithHeader(err error, headers http.H
 		slog.Error(err.Error())
 	}
 
-	return r.BuildResponseWithHeader(statusCode, serviceErr, headers)
+	return r.BuildResponseWithHeader(res, statusCode, serviceErr, headers)
 }
 
 func isServiceError(err error) (bool, int) {

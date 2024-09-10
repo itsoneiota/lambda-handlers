@@ -12,6 +12,16 @@ type Error struct {
 	Message string `json:"message"`
 }
 
+func NewServiceError(id, code, message string) *ServiceError {
+	return &ServiceError{
+		Err: Error{
+			ID:      id,
+			Code:    code,
+			Message: message,
+		},
+	}
+}
+
 // Error returns the error message
 func (se *ServiceError) Error() string {
 	return se.Err.Message
