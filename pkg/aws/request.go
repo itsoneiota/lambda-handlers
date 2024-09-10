@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -26,6 +27,8 @@ func NewHttpRequest(
 	ctx context.Context,
 	r *events.APIGatewayProxyRequest,
 ) (*http.Request, error) {
+	slog.Debug(fmt.Sprintf("%v", ctx))
+
 	scheme := "https"
 	if v, ok := r.Headers["X-Forwarded-Proto"]; ok {
 		scheme = v
