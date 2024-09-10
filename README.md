@@ -8,7 +8,7 @@ Currently supported:
 
 ## Usage
 
-The first step is to swap our your CSP specific event request and response objects with the generic `Requester` and `Responder` interfaces defined in the handler package of this module.
+The lambda handler uses the default `http.Request` core package to handle any request, there conversion of other request packages must be done in order to use this package. There is a built in aws handler, which converter `events.APIGatewayProxyRequest` to `http.Request`. The handler also uses response writer, therefore fulfilling the contract of using a `mux` router.
 
 ```go
 package example
@@ -30,39 +30,34 @@ type Connector interface {
 
 const findHandlerDefaultCount = 10
 
-type AfterFindHandlerHook func(interface{}) error
 func FindHandler(
 	resHander *handler.ResponseHandler,
 	connector Connector,
-	beforeHook handler.BeforeHandlerHook,
-	afterHook AfterFindHandlerHook,
-) handler.HandlerFunc {
-	return func(request handler.Requester) (handler.Responder, error) {
-		if beforeHook != nil {
-			if err := beforeHook(request); err != nil {
-				return resHander.BuildErrorResponse(err)
-			}
-		}
-
-		token := request.GetAuthToken()
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		token := req.Header.Get("Authorization")
 		if err := connector.Authorize(token); err != nil {
-			return resHander.BuildErrorResponse(err)
+			resHander.BuildErrorResponse(w, err)
 		}
 
-		postcode := request.QueryByName("query")
+		query, err := url.ParseQuery(req.URL.RawQuery)
+		if err != nil {
+			resHander.BuildErrorResponse(w, err)
+		}
+
+		var postcode string
+		if query.Has("postcode") {
+			postcode = query.Get("postcode")
+		} else {
+			resHander.BuildErrorResponse(w, errors.New("postcode required"))
+		}
 
 		addresses, err := connector.Find(postcode)
 		if err != nil {
-			return resHander.BuildErrorResponse(err)
+			resHander.BuildErrorResponse(w, err)
 		}
 
-		if afterHook != nil {
-			if err := afterHook(addresses); err != nil {
-				return resHander.BuildErrorResponse(err)
-			}
-		}
-
-		return resHander.BuildResponse(http.StatusOK, addresses)
+		resHander.BuildResponse(w, http.StatusOK, addresses)
 	}
 }
 
@@ -80,8 +75,15 @@ log.Fatal(http.ListenAndServe("localhost:8080", r))
 In the case where you want to run this handler in AWS Lambda, simply pass the handler into the `Start` method found within the `aws` package of this module.
 ```go
 
-aws.Start(handler)
+aws.Start(
+	handler,
+	nil,
+	nil,
+	http.Headers{},
+)
 ```
+
+When implemeting the lambda `Start` method you can also define before hooks (which means you can manipluate a request within you code base), or after hooks (for maniplate the response object of a handler). Any default headers that you wish to be added to your response can be defined as the parameter of the `Start` method.
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.

@@ -67,7 +67,7 @@ func (s *FindHandlerSuite) TestHandler() {
 	)
 
 	// Asserts
-	FindHandler(resHander, s.Connector(), nil, nil)(res, s.req)
+	FindHandler(resHander, s.Connector())(res, s.req)
 
 	awsRes := aws.NewEvent(res)
 	expectAwsRes := &events.APIGatewayProxyResponse{

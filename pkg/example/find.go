@@ -27,8 +27,6 @@ type AfterFindHandlerHook func(interface{}) error
 func FindHandler(
 	resHander *handler.ResponseHandler,
 	connector Connector,
-	beforeHook handler.BeforeHandlerHook,
-	afterHook AfterFindHandlerHook,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		token := req.Header.Get("Authorization")
@@ -51,12 +49,6 @@ func FindHandler(
 		addresses, err := connector.Find(postcode)
 		if err != nil {
 			resHander.BuildErrorResponse(w, err)
-		}
-
-		if afterHook != nil {
-			if err := afterHook(addresses); err != nil {
-				resHander.BuildErrorResponse(w, err)
-			}
 		}
 
 		resHander.BuildResponse(w, http.StatusOK, addresses)

@@ -36,7 +36,7 @@ func main() {
 	resHander := handler.NewResponseHandler()
 
 	r := muxRouter.NewRouter()
-	r.HandleFunc("/test", mux.CreateHandler(example.FindHandler(resHander, c, nil, nil)))
+	r.HandleFunc("/test", mux.CreateHandler(example.FindHandler(resHander, c)))
 
 	log.Fatal(http.ListenAndServe("localhost:8080", r))
 }
