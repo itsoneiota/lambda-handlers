@@ -2,11 +2,11 @@ package aws
 
 import (
 	"bytes"
-	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -22,10 +22,7 @@ var (
 	ErrContentTypeHeaderMissingBoundary = errors.New("content type header missing boundary error")
 )
 
-func NewHttpRequest(
-	ctx context.Context,
-	r *events.APIGatewayProxyRequest,
-) (*http.Request, error) {
+func NewHttpRequest(r *events.APIGatewayProxyRequest) (*http.Request, error) {
 	scheme := "https"
 	if v, ok := r.Headers["X-Forwarded-Proto"]; ok {
 		scheme = v
@@ -110,7 +107,7 @@ func NewHttpRequest(
 		}
 	}
 
-	req.WithContext(ctx)
+	slog.Debug(fmt.Sprintf("%v", req.Context()))
 
 	return req, nil
 }
