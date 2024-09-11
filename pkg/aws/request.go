@@ -24,7 +24,7 @@ var (
 )
 
 func NewHttpRequest(
-	ctx context.Context,
+	_ context.Context,
 	r *events.APIGatewayProxyRequest,
 ) (*http.Request, error) {
 	scheme := "https"
@@ -110,10 +110,10 @@ func NewHttpRequest(
 			req.MultipartForm = multipartForm
 		}
 	}
+	ctx := req.Context()
+	newCtx := context.WithValue(ctx, UnixNow, 123)
 
-	req.WithContext(ctx)
-
-	req.Context()
+	req.WithContext(newCtx)
 
 	slog.Debug(fmt.Sprintf("%v", req.Context()))
 
