@@ -2,7 +2,6 @@ package aws
 
 import (
 	"bytes"
-	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -23,10 +22,7 @@ var (
 	ErrContentTypeHeaderMissingBoundary = errors.New("content type header missing boundary error")
 )
 
-func NewHttpRequest(
-	_ context.Context,
-	r *events.APIGatewayProxyRequest,
-) (*http.Request, error) {
+func NewHttpRequest(r *events.APIGatewayProxyRequest) (*http.Request, error) {
 	scheme := "https"
 	if v, ok := r.Headers["X-Forwarded-Proto"]; ok {
 		scheme = v
@@ -110,10 +106,6 @@ func NewHttpRequest(
 			req.MultipartForm = multipartForm
 		}
 	}
-	ctx := req.Context()
-	newCtx := context.WithValue(ctx, UnixNow, 123)
-
-	req.WithContext(newCtx)
 
 	slog.Debug(fmt.Sprintf("%v", req.Context()))
 

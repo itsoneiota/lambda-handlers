@@ -1,18 +1,14 @@
 package aws
 
 import (
-	"context"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/gorilla/mux"
 	"github.com/itsoneiota/lambda-handlers/v2/pkg/handler"
 )
-
-const UnixNow = "unixnow"
 
 type LambdaCallback = func(request *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error)
 
@@ -35,9 +31,7 @@ func getHandler(
 ) LambdaCallback {
 	return func(r *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 		resp := NewResponseWriter(defaultHeaders)
-		ctx := context.Background()
-
-		req, err := NewHttpRequest(context.WithValue(ctx, UnixNow, time.Unix(r.RequestContext.RequestTimeEpoch, 0)), r)
+		req, err := NewHttpRequest(r)
 		if err != nil {
 			return nil, err
 		}

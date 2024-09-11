@@ -1,7 +1,6 @@
 package aws
 
 import (
-	"context"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -63,7 +62,7 @@ func (s *RequestSuite) SetupTest() {
 }
 
 func (s *RequestSuite) TestNewHttpRequest() {
-	req, err := NewHttpRequest(context.Background(), s.req)
+	req, err := NewHttpRequest(s.req)
 	s.NoError(err)
 
 	s.IsType(&http.Request{}, req)
@@ -89,7 +88,7 @@ func (s *RequestSuite) TestNewHttpRequest() {
 func (s *RequestSuite) TestNewHttpRequestEncodedBody() {
 	s.req.Body = "eyJuYW1lIjogIkV4YW1wbGUgUHJvZHVjdCJ9"
 	s.req.IsBase64Encoded = true
-	req, err := NewHttpRequest(context.Background(), s.req)
+	req, err := NewHttpRequest(s.req)
 	s.NoError(err)
 
 	s.IsType(&http.Request{}, req)
@@ -114,7 +113,7 @@ func (s *RequestSuite) TestNewHttpRequestMultipartForm() {
 		content +
 		"\r\n--BOUNDARY--\r\n"
 
-	req, err := NewHttpRequest(context.Background(), s.req)
+	req, err := NewHttpRequest(s.req)
 	s.NoError(err)
 
 	s.IsType(&http.Request{}, req)
