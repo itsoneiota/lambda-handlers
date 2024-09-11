@@ -27,8 +27,6 @@ func NewHttpRequest(
 	ctx context.Context,
 	r *events.APIGatewayProxyRequest,
 ) (*http.Request, error) {
-	slog.Debug(fmt.Sprintf("%v", ctx))
-
 	scheme := "https"
 	if v, ok := r.Headers["X-Forwarded-Proto"]; ok {
 		scheme = v
@@ -114,6 +112,10 @@ func NewHttpRequest(
 	}
 
 	req.WithContext(ctx)
+
+	req.Context()
+
+	slog.Debug(fmt.Sprintf("%v", req.Context()))
 
 	return req, nil
 }
