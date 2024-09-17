@@ -60,9 +60,16 @@ func getHandler(
 }
 
 func NewEvent(r *ResponseWriter) *events.APIGatewayProxyResponse {
+	headers := map[string]string{}
+	for k, v := range r.Header() {
+		if len(v) > 0 {
+			headers[k] = v[0]
+		}
+	}
+
 	return &events.APIGatewayProxyResponse{
 		StatusCode: r.StatusCode,
-		Headers:    r.Headers,
+		Headers:    headers,
 		Body:       r.Body,
 	}
 }
