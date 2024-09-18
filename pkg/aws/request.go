@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log/slog"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -106,8 +105,6 @@ func NewHttpRequest(r *events.APIGatewayProxyRequest) (*http.Request, error) {
 			req.MultipartForm = multipartForm
 		}
 	}
-
-	slog.Debug(fmt.Sprintf("%v", req.Context()))
 
 	return req, nil
 }

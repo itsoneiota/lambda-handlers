@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -60,6 +61,9 @@ func getHandler(
 }
 
 func NewEvent(r *ResponseWriter) *events.APIGatewayProxyResponse {
+	slog.Debug("--- Body ---")
+	slog.Debug(r.Body)
+	slog.Debug("--- End ---")
 	headers := map[string]string{}
 	for k, v := range r.Header() {
 		if len(v) > 0 {
