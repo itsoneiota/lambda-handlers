@@ -24,7 +24,7 @@ func (s *ResponseWriterSuite) TestNewResponseWriter() {
 	r := NewResponseWriter(s.headers)
 
 	s.IsType(&ResponseWriter{}, r)
-	s.NotEmpty(r.Headers)
+	s.NotEmpty(r.Header())
 
 	r.WriteHeader(http.StatusOK)
 	s.Equal(http.StatusOK, r.StatusCode)
@@ -37,7 +37,7 @@ func (s *ResponseWriterSuite) TestErrorResponse() {
 	r := NewResponseWriter(s.headers)
 
 	s.IsType(&ResponseWriter{}, r)
-	s.NotEmpty(r.Headers)
+	s.NotEmpty(r.Header())
 
 	r.WriteHeader(http.StatusBadRequest)
 	s.Equal(http.StatusBadRequest, r.StatusCode)
@@ -50,13 +50,24 @@ func (s *ResponseWriterSuite) TestWrapperString() {
 	r := NewResponseWriter(s.headers)
 
 	s.IsType(&ResponseWriter{}, r)
-	s.NotEmpty(r.Headers)
+	s.NotEmpty(r.Header())
 
 	r.WriteHeader(http.StatusBadRequest)
 	s.Equal(http.StatusBadRequest, r.StatusCode)
 
 	r.Write([]byte("\"Oops\"\n"))
 	s.Equal("{\"error\":{\"id\":\"BAD_REQUEST\",\"code\":\"BAD_REQUEST\",\"message\":\"Oops\"}}", r.Body)
+}
+
+func (s *ResponseWriterSuite) TestAddHeader() {
+	r := NewResponseWriter(s.headers)
+
+	s.IsType(&ResponseWriter{}, r)
+	s.NotEmpty(r.Header())
+
+	r.Header().Add("foo", "bar")
+	s.Equal(2, len(r.Header()))
+	s.Equal("bar", r.Header().Get("foo"))
 }
 
 // In order for 'go test' to run this suite, we need to create

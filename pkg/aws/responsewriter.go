@@ -11,30 +11,18 @@ import (
 
 type ResponseWriter struct {
 	*events.APIGatewayProxyResponse
+	defaulHeaders http.Header
 }
 
 func NewResponseWriter(headers http.Header) *ResponseWriter {
-	h := map[string]string{}
-	for k, v := range headers {
-		if len(v) > 0 {
-			h[k] = v[0]
-		}
-	}
-
 	return &ResponseWriter{
-		APIGatewayProxyResponse: &events.APIGatewayProxyResponse{
-			Headers: h,
-		},
+		APIGatewayProxyResponse: &events.APIGatewayProxyResponse{},
+		defaulHeaders:           headers,
 	}
 }
 
 func (w *ResponseWriter) Header() http.Header {
-	result := http.Header{}
-	for k, v := range w.Headers {
-		result.Add(k, v)
-	}
-
-	return result
+	return w.defaulHeaders
 }
 
 func (w *ResponseWriter) Write(body []byte) (int, error) {
