@@ -88,9 +88,7 @@ func (r *ResponseHandler) BuildErrorResponseWithHeader(err error, headers http.H
 		}
 	}
 
-	if statusCode == http.StatusInternalServerError {
-		slog.Error(err.Error())
-	}
+	slog.Error(err.Error())
 
 	return r.BuildResponseWithHeader(statusCode, serviceErr, headers)
 }
