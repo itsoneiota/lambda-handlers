@@ -10,6 +10,13 @@ type Context struct {
 	values map[string]any
 }
 
+func NewAWSContext(ctx events.APIGatewayProxyRequestContext) *Context {
+	return &Context{
+		APIGatewayProxyRequestContext: ctx,
+		values:                        map[string]any{},
+	}
+}
+
 // SourceIP returns the source ip that has made the request.
 func (c Context) SourceIP() string {
 	return c.Identity.SourceIP

@@ -12,16 +12,17 @@ func TestContexterInterface(t *testing.T) {
 	ip := "SourceIP"
 	stage := "dev"
 	unixNow := int64(1234567)
-	e := events.APIGatewayProxyRequestContext{
-		Identity: events.APIGatewayRequestIdentity{
-			SourceIP: ip,
-		},
-		RequestTimeEpoch: unixNow,
-		HTTPMethod:       http.MethodGet,
-		Stage:            stage,
-	}
 
-	ctx := Context{APIGatewayProxyRequestContext: e}
+	ctx := NewAWSContext(
+		events.APIGatewayProxyRequestContext{
+			Identity: events.APIGatewayRequestIdentity{
+				SourceIP: ip,
+			},
+			RequestTimeEpoch: unixNow,
+			HTTPMethod:       http.MethodGet,
+			Stage:            stage,
+		},
+	)
 
 	assert.Equal(t, ip, ctx.SourceIP())
 	assert.Equal(t, unixNow, ctx.UnixNow())
