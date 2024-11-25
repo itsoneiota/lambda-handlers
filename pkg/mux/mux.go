@@ -10,7 +10,10 @@ func CreateHandler(
 	h handler.HandlerFunc,
 ) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		res, _ := h(Context{r}, NewRequest(r))
+		res, _ := h(Context{
+			Request: r,
+			values:  map[string]any{},
+		}, NewRequest(r))
 
 		WriteResponse(res, w)
 	}

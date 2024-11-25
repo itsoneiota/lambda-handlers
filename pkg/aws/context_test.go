@@ -21,7 +21,7 @@ func TestContexterInterface(t *testing.T) {
 		Stage:            stage,
 	}
 
-	ctx := Context{e}
+	ctx := Context{APIGatewayProxyRequestContext: e}
 
 	assert.Equal(t, ip, ctx.SourceIP())
 	assert.Equal(t, unixNow, ctx.UnixNow())

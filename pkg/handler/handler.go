@@ -30,7 +30,9 @@ type Contexter interface {
 	UnixNow() int64
 	UserAgent() string
 	HttpMethod() string
+	SetValue(string, any)
 	Stage() string
+	Value(string) any
 }
 
 // BeforeHandlerHook is a callback function called before a handler functions main logic is ran.
@@ -38,3 +40,9 @@ type Contexter interface {
 type BeforeHandlerHook func(Requester) error
 
 type HandlerFunc = func(c Contexter, request Requester) (*Response, error)
+
+func WithValue(ctx Contexter, key string, value any) Contexter {
+	ctx.SetValue(key, value)
+
+	return ctx
+}

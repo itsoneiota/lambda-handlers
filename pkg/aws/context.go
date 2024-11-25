@@ -7,6 +7,7 @@ import (
 // Context is the aws request context.
 type Context struct {
 	events.APIGatewayProxyRequestContext
+	values map[string]any
 }
 
 // SourceIP returns the source ip that has made the request.
@@ -31,4 +32,16 @@ func (c Context) HttpMethod() string {
 
 func (c Context) Stage() string {
 	return c.APIGatewayProxyRequestContext.Stage
+}
+
+func (c Context) Value(key string) any {
+	if val, ok := c.values[key]; ok {
+		return val
+	}
+
+	return nil
+}
+
+func (c Context) SetValue(key string, value any) {
+	c.values[key] = value
 }

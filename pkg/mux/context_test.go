@@ -14,7 +14,7 @@ func TestContexterInterface(t *testing.T) {
 		Method:     http.MethodGet,
 	}
 
-	ctx := Context{r}
+	ctx := Context{Request: r}
 
 	assert.Equal(t, ip, ctx.SourceIP())
 	assert.IsType(t, int64(1), ctx.UnixNow())
