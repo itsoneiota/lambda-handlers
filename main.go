@@ -33,7 +33,7 @@ func main() {
 		nil,
 	).Times(1)
 
-	resHander := handler.NewResponseHandler(http.Header{})
+	resHander := handler.New(http.Header{})
 
 	r := muxRouter.NewRouter()
 	r.HandleFunc("/test", mux.CreateHandler(example.FindHandler(resHander, c, nil, nil)))

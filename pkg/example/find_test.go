@@ -50,7 +50,7 @@ func TestFind_AWS(t *testing.T) {
 	headers := http.Header{}
 	headers.Set("Content-Type", "application/json")
 
-	resHander := handler.NewResponseHandler(
+	resHander := handler.New(
 		headers,
 	)
 

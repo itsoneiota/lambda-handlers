@@ -23,7 +23,7 @@ type AfterFindHandlerHook func(interface{}) error
 // FindHandler returns a handlers.HandlerFunc which is used for the Find endpoint.
 // The handler calls the Find method of the connector
 func FindHandler(
-	resHander *handler.ResponseHandler,
+	resHander *handler.Handler,
 	connector Connector,
 	beforeHook handler.BeforeHandlerHook,
 	afterHook AfterFindHandlerHook,

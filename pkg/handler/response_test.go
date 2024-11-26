@@ -22,7 +22,7 @@ func TestBuildResponder(t *testing.T) {
 	l := test.NewNullLogger()
 	slog.SetDefault(l)
 
-	hand := NewResponseHandler(headers)
+	hand := New(headers)
 
 	res, err := hand.BuildResponderWithHeader(code, body, nil)
 
@@ -38,7 +38,7 @@ func TestBuildResponseWithHeader_Empty(t *testing.T) {
 	l := test.NewNullLogger()
 	slog.SetDefault(l)
 
-	hand := NewResponseHandler(headers)
+	hand := New(headers)
 
 	res, err := hand.BuildResponseWithHeader(code, nil, nil)
 
@@ -58,7 +58,7 @@ func TestBuildResponseWithHeader(t *testing.T) {
 	l := test.NewNullLogger()
 	slog.SetDefault(l)
 
-	hand := NewResponseHandler(headers)
+	hand := New(headers)
 
 	res, err := hand.BuildResponseWithHeader(code, model, nil)
 
@@ -80,7 +80,7 @@ func TestBuildResponseWithHeader_Multiple(t *testing.T) {
 		},
 	}
 
-	hand := NewResponseHandler(http.Header{})
+	hand := New(http.Header{})
 
 	res, err := hand.BuildResponseWithHeader(code, model, headers)
 
@@ -107,7 +107,7 @@ func TestBuildResponseWithHeader_Cookie(t *testing.T) {
 	l := test.NewNullLogger()
 	slog.SetDefault(l)
 
-	hand := NewResponseHandler(http.Header{})
+	hand := New(http.Header{})
 
 	res, err := hand.BuildResponseWithHeader(code, model, headers)
 

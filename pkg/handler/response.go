@@ -7,20 +7,20 @@ import (
 )
 
 // Genertic Handler object which is the reciever in every handler method
-type ResponseHandler struct {
+type Handler struct {
 	defaultHeaders http.Header
 }
 
-func NewResponseHandler(
+func New(
 	defaultHeads http.Header,
-) *ResponseHandler {
-	return &ResponseHandler{
+) *Handler {
+	return &Handler{
 		defaultHeaders: defaultHeads,
 	}
 }
 
 // BuildResponseWithHeader creates an output Response with header
-func (r *ResponseHandler) BuildResponseWithHeader(code int, model interface{}, headers http.Header) (*Response, error) {
+func (r *Handler) BuildResponseWithHeader(code int, model interface{}, headers http.Header) (*Response, error) {
 	body := ""
 	if model != nil {
 		bodyBytes, err := json.Marshal(model)
@@ -35,13 +35,13 @@ func (r *ResponseHandler) BuildResponseWithHeader(code int, model interface{}, h
 }
 
 // BuildResponse creates an output Response
-func (r *ResponseHandler) BuildResponse(code int, model interface{}) (*Response, error) {
+func (r *Handler) BuildResponse(code int, model interface{}) (*Response, error) {
 	return r.BuildResponseWithHeader(code, model, http.Header{})
 }
 
 // BuildResponderWithHeader builds an Response with the given status code & response body
 // The Response will contain the raw response body and appropriate JSON header
-func (r *ResponseHandler) BuildResponderWithHeader(code int, body string, inputHeaders http.Header) (*Response, error) {
+func (r *Handler) BuildResponderWithHeader(code int, body string, inputHeaders http.Header) (*Response, error) {
 	if inputHeaders != nil {
 		for defKey, defVals := range r.defaultHeaders {
 			for _, v := range defVals {
@@ -59,15 +59,15 @@ func (r *ResponseHandler) BuildResponderWithHeader(code int, body string, inputH
 
 // BuildResponder builds an Response with the given status code & response body
 // The Response will contain the raw response body and appropriate JSON header
-func (r *ResponseHandler) BuildResponder(code int, body string) (*Response, error) {
+func (r *Handler) BuildResponder(code int, body string) (*Response, error) {
 	return r.BuildResponderWithHeader(code, body, http.Header{})
 }
 
-func (r *ResponseHandler) BuildErrorResponse(err error) (*Response, error) {
+func (r *Handler) BuildErrorResponse(err error) (*Response, error) {
 	return r.BuildErrorResponseWithHeader(err, http.Header{})
 }
 
-func (r *ResponseHandler) BuildErrorResponseWithHeader(err error, headers http.Header) (*Response, error) {
+func (r *Handler) BuildErrorResponseWithHeader(err error, headers http.Header) (*Response, error) {
 	statusCode := http.StatusInternalServerError
 	var serviceErr error
 
