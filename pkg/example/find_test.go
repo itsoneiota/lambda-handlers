@@ -47,16 +47,16 @@ func TestFind_AWS(t *testing.T) {
 	l := test.NewNullLogger()
 	slog.SetDefault(l)
 
-	headers := http.Header{}
-	headers.Set("Content-Type", "application/json")
+	headers := http.Header{
+		"Content-Type": []string{"application/json"},
+	}
 
 	resHander := handler.New(
 		headers,
 	)
 
 	// Asserts
-	resp, err := FindHandler(resHander, c, nil, nil)(aws.Context{}, req)
-	assert.NoError(t, err)
+	resp := resHander.Run(FindHandler(resHander, c, nil, nil))(aws.Context{}, req)
 
 	awsRes := aws.NewEvent(resp)
 	expectAwsRes := &events.APIGatewayProxyResponse{

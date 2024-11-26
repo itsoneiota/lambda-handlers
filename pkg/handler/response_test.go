@@ -1,11 +1,10 @@
 package handler
 
 import (
-	"log/slog"
+	"encoding/json"
 	"net/http"
 	"testing"
 
-	"github.com/itsoneiota/lambda-handlers/pkg/test"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,65 +12,50 @@ type Model struct {
 	Success bool `json:"success"`
 }
 
-func TestBuildResponder(t *testing.T) {
+func TestNewResponse(t *testing.T) {
 	body := "model"
-	code := 200
-	headers := http.Header{}
-	headers.Set("default", "header")
+	code := http.StatusOK
 
-	l := test.NewNullLogger()
-	slog.SetDefault(l)
-
-	hand := New(headers)
-
-	res, err := hand.BuildResponderWithHeader(code, body, nil)
-
-	assert.NoError(t, err)
+	res := NewResponse(code, body)
 	assert.IsType(t, (*Response)(nil), res)
+
+	assert.Equal(t, code, res.StatusCode)
+	assert.Equal(t, body, res.Body)
 }
 
-func TestBuildResponseWithHeader_Empty(t *testing.T) {
+func TestNewResponseWithModel(t *testing.T) {
+	body := Model{
+		Success: true,
+	}
 	code := 200
-	headers := http.Header{}
-	headers.Set("default", "header")
 
-	l := test.NewNullLogger()
-	slog.SetDefault(l)
-
-	hand := New(headers)
-
-	res, err := hand.BuildResponseWithHeader(code, nil, nil)
-
-	assert.NoError(t, err)
+	res := NewResponse(code, body)
 	assert.IsType(t, (*Response)(nil), res)
+
+	b, err := json.Marshal(body)
+	assert.NoError(t, err)
+
+	assert.JSONEq(t, string(b), res.Body)
 }
 
 func TestBuildResponseWithHeader(t *testing.T) {
-	model := Model{
-		Success: true,
-	}
+	res := NewResponse(
+		http.StatusOK,
+		Model{
+			Success: true,
+		},
+		WithHeaders(
+			http.Header{
+				"default": []string{"header"},
+			},
+		),
+	)
 
-	code := 200
-	headers := http.Header{}
-	headers.Set("default", "header")
-
-	l := test.NewNullLogger()
-	slog.SetDefault(l)
-
-	hand := New(headers)
-
-	res, err := hand.BuildResponseWithHeader(code, model, nil)
-
-	assert.NoError(t, err)
 	assert.IsType(t, (*Response)(nil), res)
+	assert.NotEmpty(t, res.Headers)
 }
 
 func TestBuildResponseWithHeader_Multiple(t *testing.T) {
-	model := Model{
-		Success: true,
-	}
-
-	code := 200
 	headers := http.Header{
 		"Server-Timing": []string{
 			"cdn-cache; desc=HIT",
@@ -80,21 +64,19 @@ func TestBuildResponseWithHeader_Multiple(t *testing.T) {
 		},
 	}
 
-	hand := New(http.Header{})
+	res := NewResponse(
+		http.StatusOK,
+		Model{
+			Success: true,
+		},
+		WithHeaders(headers),
+	)
 
-	res, err := hand.BuildResponseWithHeader(code, model, headers)
-
-	assert.NoError(t, err)
 	assert.IsType(t, (*Response)(nil), res)
 	assert.Equal(t, headers, res.Headers)
 }
 
 func TestBuildResponseWithHeader_Cookie(t *testing.T) {
-	model := Model{
-		Success: true,
-	}
-
-	code := 200
 	headers := http.Header{
 		"Set-Cookie": []string{
 			"loggedIn=True; path=/; secure",
@@ -104,14 +86,14 @@ func TestBuildResponseWithHeader_Cookie(t *testing.T) {
 		},
 	}
 
-	l := test.NewNullLogger()
-	slog.SetDefault(l)
-
-	hand := New(http.Header{})
-
-	res, err := hand.BuildResponseWithHeader(code, model, headers)
-
-	assert.NoError(t, err)
+	res := NewResponse(
+		http.StatusOK,
+		Model{
+			Success: true,
+		},
+		WithHeaders(headers),
+	)
 	assert.IsType(t, (*Response)(nil), res)
+
 	assert.Equal(t, headers, res.Headers)
 }

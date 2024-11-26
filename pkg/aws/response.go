@@ -9,7 +9,7 @@ import (
 	"github.com/itsoneiota/lambda-handlers/pkg/handler"
 )
 
-type LambdaCallback = func(request *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error)
+type LambdaCallback = func(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse
 
 func Start(h handler.HandlerFunc) {
 	lambda.Start(
@@ -18,10 +18,8 @@ func Start(h handler.HandlerFunc) {
 }
 
 func getHandler(h handler.HandlerFunc) LambdaCallback {
-	return func(r *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-		res, err := h(NewAWSContext(r.RequestContext), NewAWSRequest(r))
-
-		return NewEvent(res), err
+	return func(r *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
+		return NewEvent(h(NewAWSContext(r.RequestContext), NewAWSRequest(r)))
 	}
 }
 

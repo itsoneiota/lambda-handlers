@@ -18,13 +18,6 @@ type Requester interface {
 	SetQueryByName(name, set string)
 }
 
-// Generic Response object which is used in every handler
-type Response struct {
-	StatusCode int
-	Headers    http.Header
-	Body       string
-}
-
 type Contexter interface {
 	SourceIP() string
 	UnixNow() int64
@@ -39,7 +32,20 @@ type Contexter interface {
 // A Callback function can be passed in when building a handler and is passed the raw API Gateway Request struct
 type BeforeHandlerHook func(Requester) error
 
-type HandlerFunc = func(c Contexter, request Requester) (*Response, error)
+type HandlerFunc = func(c Contexter, request Requester) *Response
+
+// Genertic Handler object which is the reciever in every handler method
+type Handler struct {
+	defaultHeaders http.Header
+}
+
+func New(
+	defaultHeads http.Header,
+) *Handler {
+	return &Handler{
+		defaultHeaders: defaultHeads,
+	}
+}
 
 func WithValue(ctx Contexter, key string, value any) Contexter {
 	ctx.SetValue(key, value)

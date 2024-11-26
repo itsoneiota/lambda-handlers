@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"errors"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -11,48 +10,31 @@ import (
 )
 
 func TestRun(t *testing.T) {
-	testHandler := func(ctx Contexter, req Requester) (*Response, error) {
-		return &Response{StatusCode: http.StatusOK, Body: "foo"}, nil
+	testHandler := func(ctx Contexter, req Requester) *Response {
+		return &Response{StatusCode: http.StatusOK, Body: "foo"}
 	}
 
 	req := testRequest{}
 	ctx := testContext{}
 	handler := New(http.Header{})
-	resp, err := handler.Run(testHandler)(ctx, req)
-	assert.NoError(t, err)
+	resp := handler.Run(testHandler)(ctx, req)
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, "foo", resp.Body)
 }
 
 func TestRunResponseError(t *testing.T) {
-	testHandler := func(ctx Contexter, req Requester) (*Response, error) {
-		return &Response{StatusCode: http.StatusNotFound, Body: "foo not found"}, nil
+	testHandler := func(ctx Contexter, req Requester) *Response {
+		return &Response{StatusCode: http.StatusNotFound, Body: "foo not found"}
 	}
 
 	req := testRequest{}
 	ctx := testContext{}
 	handler := New(http.Header{})
-	resp, err := handler.Run(testHandler)(ctx, req)
-	assert.NoError(t, err)
+	resp := handler.Run(testHandler)(ctx, req)
 
 	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 	assert.Equal(t, "foo not found", resp.Body)
-}
-
-func TestRunError(t *testing.T) {
-	testHandler := func(ctx Contexter, req Requester) (*Response, error) {
-		return nil, errors.New("something bad has happened!")
-	}
-
-	req := testRequest{}
-	ctx := testContext{}
-	handler := New(http.Header{})
-	resp, err := handler.Run(testHandler)(ctx, req)
-	assert.NoError(t, err)
-
-	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
-	assert.JSONEq(t, `{"error":{"id":"UNKNOWN_ERROR","code":"UNKNOWN_ERROR","message":"An unknown error occurred"}}`, resp.Body)
 }
 
 type testRequest struct{}
