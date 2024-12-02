@@ -33,10 +33,8 @@ func main() {
 		nil,
 	).Times(1)
 
-	resHander := handler.New(http.Header{})
-
 	r := muxRouter.NewRouter()
-	r.HandleFunc("/test", mux.CreateHandler(example.FindHandler(resHander, c, nil, nil)))
+	r.HandleFunc("/test", mux.CreateHandler(handler.New(example.FindHandler(c, nil, nil)).Run()))
 
 	log.Fatal(http.ListenAndServe("localhost:8080", r))
 }

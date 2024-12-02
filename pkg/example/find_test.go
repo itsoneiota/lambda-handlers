@@ -1,7 +1,6 @@
 package example
 
 import (
-	"log/slog"
 	"net/http"
 	"testing"
 
@@ -9,7 +8,6 @@ import (
 	"github.com/itsoneiota/lambda-handlers/internal/mocks"
 	"github.com/itsoneiota/lambda-handlers/pkg/aws"
 	"github.com/itsoneiota/lambda-handlers/pkg/handler"
-	"github.com/itsoneiota/lambda-handlers/pkg/test"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -44,19 +42,14 @@ func TestFind_AWS(t *testing.T) {
 		nil,
 	).Times(1)
 
-	l := test.NewNullLogger()
-	slog.SetDefault(l)
-
 	headers := http.Header{
 		"Content-Type": []string{"application/json"},
 	}
 
-	resHander := handler.New(
-		headers,
-	)
-
-	// Asserts
-	resp := resHander.Run(FindHandler(resHander, c, nil, nil))(aws.Context{}, req)
+	resp := handler.New(
+		FindHandler(c, nil, nil),
+		handler.WithHeaders(headers),
+	).Run()(aws.Context{}, req)
 
 	awsRes := aws.NewEvent(resp)
 	expectAwsRes := &events.APIGatewayProxyResponse{

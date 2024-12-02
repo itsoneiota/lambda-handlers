@@ -2,10 +2,13 @@ package handler
 
 type Middleware func(HandlerFunc) HandlerFunc
 
-func (rh *Handler) Middlewares(h HandlerFunc, middlewares ...Middleware) HandlerFunc {
+func (h *Handler) Middlewares(middlewares ...Middleware) *Handler {
+	f := h.function
 	for _, middleware := range middlewares {
-		h = middleware(h)
+		f = middleware(f)
 	}
+
+	h.function = f
 
 	return h
 }

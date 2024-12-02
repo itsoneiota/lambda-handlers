@@ -6,11 +6,6 @@ import (
 	"net/http"
 )
 
-type Setter func(*opt)
-
-type opt struct {
-	headers http.Header
-}
 
 // Generic Response object which is used in every handler
 type Response struct {
@@ -95,8 +90,3 @@ func isServiceError(err error) (bool, int) {
 	return isSe, code
 }
 
-func WithHeaders(headers http.Header) Setter {
-	return func(o *opt) {
-		o.headers = headers
-	}
-}

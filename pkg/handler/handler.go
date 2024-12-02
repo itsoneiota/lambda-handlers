@@ -36,14 +36,22 @@ type HandlerFunc = func(c Contexter, request Requester) *Response
 
 // Genertic Handler object which is the reciever in every handler method
 type Handler struct {
-	defaultHeaders http.Header
+	function HandlerFunc
+	headers  http.Header
 }
 
 func New(
-	defaultHeads http.Header,
+	function HandlerFunc,
+	opts ...Setter,
 ) *Handler {
+	opt := &opt{}
+	for _, o := range opts {
+		o(opt)
+	}
+
 	return &Handler{
-		defaultHeaders: defaultHeads,
+		function: function,
+		headers:  opt.headers,
 	}
 }
 

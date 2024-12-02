@@ -32,37 +32,36 @@ const findHandlerDefaultCount = 10
 
 type AfterFindHandlerHook func(interface{}) error
 func FindHandler(
-	resHander *handler.ResponseHandler,
 	connector Connector,
 	beforeHook handler.BeforeHandlerHook,
 	afterHook AfterFindHandlerHook,
 ) handler.HandlerFunc {
-	return func(request handler.Requester) (handler.Responder, error) {
+	return func(ctx handler.Contexter, request handler.Requester) *handler.Response {
 		if beforeHook != nil {
 			if err := beforeHook(request); err != nil {
-				return resHander.BuildErrorResponse(err)
+				return handler.NewErrorResponse(err)
 			}
 		}
 
 		token := request.GetAuthToken()
 		if err := connector.Authorize(token); err != nil {
-			return resHander.BuildErrorResponse(err)
+			return handler.NewErrorResponse(err)
 		}
 
-		postcode := request.QueryByName("query")
+		postcode := request.QueryByName("postcode")
 
 		addresses, err := connector.Find(postcode)
 		if err != nil {
-			return resHander.BuildErrorResponse(err)
+			return handler.NewErrorResponse(err)
 		}
 
 		if afterHook != nil {
 			if err := afterHook(addresses); err != nil {
-				return resHander.BuildErrorResponse(err)
+				return handler.NewErrorResponse(err)
 			}
 		}
 
-		return resHander.BuildResponse(http.StatusOK, addresses)
+		return handler.NewResponse(http.StatusOK, addresses)
 	}
 }
 
@@ -71,8 +70,7 @@ func FindHandler(
 In the case where you want to run this handler in a Mux router, call the `CreateHandler` method, pass in the generic handler defined above and pass it into the HandleFunc method on the router.
 
 ```go
-r := muxRouter.NewRouter()
-r.HandleFunc("/test", mux.CreateHandler(handler))
+r.HandleFunc("/test", mux.CreateHandler(handler.New(example.FindHandler(c, nil, nil)).Run()))
 
 log.Fatal(http.ListenAndServe("localhost:8080", r))
 ```
@@ -80,7 +78,42 @@ log.Fatal(http.ListenAndServe("localhost:8080", r))
 In the case where you want to run this handler in AWS Lambda, simply pass the handler into the `Start` method found within the `aws` package of this module.
 ```go
 
-aws.Start(handler)
+aws.Start(New(testHandler).Run())
+```
+
+## Middleware
+
+Middleware can be abled by using the `Middlewares` method on the handler:
+```go
+aws.Start(New(testHandler).Middleware(
+	testMiddleware,
+).Run())
+
+```
+
+A middleware must fulfill the `Middleware` type contract:
+```go
+type Middleware func(HandlerFunc) HandlerFunc
+```
+
+An example usage of this is below:
+```go
+testMiddleware := func(next HandlerFunc) HandlerFunc {
+	return func(ctx Contexter, req Requester) *Response {
+		ctx.SetValue("foo", 1)
+		return next(ctx, req)
+	}
+}
+```
+
+In the middleware you can manipulate both the request and the context, which then get passed through to your handler.
+
+You can also chain middleware, with them running in chronological order:
+```go
+aws.Start(New(testHandler).Middleware(
+	testMiddleware,
+	testMiddlewareTwo,
+).Run())
 ```
 
 ## Contributing
