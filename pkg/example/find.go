@@ -24,16 +24,9 @@ type AfterFindHandlerHook func(interface{}) error
 // The handler calls the Find method of the connector
 func FindHandler(
 	connector Connector,
-	beforeHook handler.BeforeHandlerHook,
 	afterHook AfterFindHandlerHook,
 ) handler.HandlerFunc {
 	return func(ctx handler.Contexter, request handler.Requester) *handler.Response {
-		if beforeHook != nil {
-			if err := beforeHook(request); err != nil {
-				return handler.NewErrorResponse(err)
-			}
-		}
-
 		token := request.GetAuthToken()
 		if err := connector.Authorize(token); err != nil {
 			return handler.NewErrorResponse(err)

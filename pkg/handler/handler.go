@@ -28,10 +28,6 @@ type Contexter interface {
 	Value(string) any
 }
 
-// BeforeHandlerHook is a callback function called before a handler functions main logic is ran.
-// A Callback function can be passed in when building a handler and is passed the raw API Gateway Request struct
-type BeforeHandlerHook func(Requester) error
-
 type HandlerFunc = func(c Contexter, request Requester) *Response
 
 // Genertic Handler object which is the reciever in every handler method

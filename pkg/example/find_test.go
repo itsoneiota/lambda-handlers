@@ -47,7 +47,7 @@ func TestFind_AWS(t *testing.T) {
 	}
 
 	resp := handler.New(
-		FindHandler(c, nil, nil),
+		FindHandler(c, nil),
 		handler.WithHeaders(headers),
 	).Run()(aws.Context{}, req)
 
