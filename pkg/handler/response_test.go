@@ -27,7 +27,7 @@ func TestNewResponseWithModel(t *testing.T) {
 	body := Model{
 		Success: true,
 	}
-	code := 200
+	code := http.StatusOK
 
 	res := NewResponse(code, body)
 	assert.IsType(t, (*Response)(nil), res)
@@ -36,6 +36,15 @@ func TestNewResponseWithModel(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.JSONEq(t, string(b), res.Body)
+}
+
+func TestNewResponseWithNil(t *testing.T) {
+	code := http.StatusNoContent
+
+	res := NewResponse(code, nil)
+	assert.IsType(t, (*Response)(nil), res)
+
+	assert.Equal(t, "", res.Body)
 }
 
 func TestBuildResponseWithHeader(t *testing.T) {

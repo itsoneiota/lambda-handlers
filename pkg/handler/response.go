@@ -6,7 +6,6 @@ import (
 	"net/http"
 )
 
-
 // Generic Response object which is used in every handler
 type Response struct {
 	StatusCode int
@@ -27,7 +26,7 @@ func NewResponse(
 	var b string
 	if v, ok := body.(string); ok {
 		b = v
-	} else {
+	} else if body != nil {
 		bodyBytes, err := json.Marshal(body)
 		if err != nil {
 			return &Response{StatusCode: http.StatusInternalServerError}
@@ -89,4 +88,3 @@ func isServiceError(err error) (bool, int) {
 
 	return isSe, code
 }
-
