@@ -30,19 +30,10 @@ type Connector interface {
 
 const findHandlerDefaultCount = 10
 
-type AfterFindHandlerHook func(interface{}) error
 func FindHandler(
 	connector Connector,
-	beforeHook handler.BeforeHandlerHook,
-	afterHook AfterFindHandlerHook,
 ) handler.HandlerFunc {
 	return func(ctx handler.Contexter, request handler.Requester) *handler.Response {
-		if beforeHook != nil {
-			if err := beforeHook(request); err != nil {
-				return handler.NewErrorResponse(err)
-			}
-		}
-
 		token := request.GetAuthToken()
 		if err := connector.Authorize(token); err != nil {
 			return handler.NewErrorResponse(err)
@@ -55,16 +46,9 @@ func FindHandler(
 			return handler.NewErrorResponse(err)
 		}
 
-		if afterHook != nil {
-			if err := afterHook(addresses); err != nil {
-				return handler.NewErrorResponse(err)
-			}
-		}
-
 		return handler.NewResponse(http.StatusOK, addresses)
 	}
 }
-
 ```
 
 In the case where you want to run this handler in a Mux router, call the `CreateHandler` method, pass in the generic handler defined above and pass it into the HandleFunc method on the router.

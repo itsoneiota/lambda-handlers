@@ -24,7 +24,6 @@ type AfterFindHandlerHook func(interface{}) error
 // The handler calls the Find method of the connector
 func FindHandler(
 	connector Connector,
-	afterHook AfterFindHandlerHook,
 ) handler.HandlerFunc {
 	return func(ctx handler.Contexter, request handler.Requester) *handler.Response {
 		token := request.GetAuthToken()
@@ -37,12 +36,6 @@ func FindHandler(
 		addresses, err := connector.Find(postcode)
 		if err != nil {
 			return handler.NewErrorResponse(err)
-		}
-
-		if afterHook != nil {
-			if err := afterHook(addresses); err != nil {
-				return handler.NewErrorResponse(err)
-			}
 		}
 
 		return handler.NewResponse(http.StatusOK, addresses)
