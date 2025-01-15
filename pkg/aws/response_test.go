@@ -1,9 +1,12 @@
 package aws
 
 import (
+	"encoding/json"
 	"net/http"
 	"testing"
 
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/itsoneiota/lambda-handlers/pkg/handler"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,4 +28,60 @@ func TestEncodeHeaders(t *testing.T) {
 	}
 
 	assert.Equal(t, expect, encodeHeaders(h))
+}
+
+func TestGetHandler(t *testing.T) {
+	type metasyntactic struct {
+		Foo string `json:"foo"`
+		Bar string `json:"bar"`
+	}
+
+	testHandler := func(ctx handler.Contexter, req handler.Requester) *handler.Response {
+		m := &metasyntactic{Foo: "handler"}
+		b, err := json.Marshal(m)
+		assert.NoError(t, err)
+
+		return &handler.Response{StatusCode: http.StatusOK, Body: string(b)}
+	}
+
+	h := &Handler{
+		handler: testHandler,
+		interceptors: []Interceptor{
+			func(r *handler.Response) *handler.Response {
+				m := &metasyntactic{}
+				err := json.Unmarshal([]byte(r.Body), m)
+				assert.NoError(t, err)
+
+				m.Bar = "interceptor 1"
+
+				b, err := json.Marshal(m)
+				assert.NoError(t, err)
+
+				r.Body = string(b)
+
+				return r
+			},
+			func(r *handler.Response) *handler.Response {
+				m := &metasyntactic{}
+				err := json.Unmarshal([]byte(r.Body), m)
+				assert.NoError(t, err)
+
+				m.Bar = "interceptor 2"
+
+				b, err := json.Marshal(m)
+				assert.NoError(t, err)
+
+				r.Body = string(b)
+
+				return r
+			},
+		},
+	}
+
+	req := &events.APIGatewayProxyRequest{}
+	resp, err := getHandler(h)(req)
+	assert.NoError(t, err)
+
+	assert.JSONEq(t, `{"foo":"handler","bar":"interceptor 2"}`, resp.Body)
+
 }

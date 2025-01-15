@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/itsoneiota/lambda-handlers/pkg/fakers"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -12,8 +13,8 @@ func TestRun(t *testing.T) {
 		return &Response{StatusCode: http.StatusOK, Body: "foo"}
 	}
 
-	req := fakeRequest{}
-	ctx := fakeContext{}
+	req := fakers.Request{}
+	ctx := fakers.Context{}
 	resp := New(testHandler).Run()(ctx, req)
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
@@ -25,8 +26,8 @@ func TestRunResponseError(t *testing.T) {
 		return &Response{StatusCode: http.StatusNotFound, Body: "foo not found"}
 	}
 
-	req := fakeRequest{}
-	ctx := fakeContext{}
+	req := fakers.Request{}
+	ctx := fakers.Context{}
 	resp := New(testHandler).Run()(ctx, req)
 
 	assert.Equal(t, http.StatusNotFound, resp.StatusCode)

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/itsoneiota/lambda-handlers/pkg/fakers"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -34,9 +35,9 @@ func TestMiddleware(t *testing.T) {
 		}
 	}
 
-	req := fakeRequest{}
-	ctx := fakeContext{
-		values: map[string]any{},
+	req := fakers.Request{}
+	ctx := fakers.Context{
+		Values: map[string]any{},
 	}
 	resp := New(testHandler, WithHeaders(http.Header{"Accept": []string{"application/json"}})).
 		Middlewares(testMiddlewareOne, testMiddlewareTwo).
