@@ -77,5 +77,7 @@ func FindHandler(connector Connector) http.HandlerFunc {
 
 		w.WriteHeader(http.StatusOK)
 		w.Write(b)
+
+		return
 	}
 }
