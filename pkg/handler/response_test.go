@@ -4,15 +4,20 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/itsoneiota/lambda-handlers/v2/pkg/fakers"
 	"github.com/stretchr/testify/suite"
 )
+
+type model struct {
+	Success bool `json:"success"`
+}
 
 type ResponseHandlerSuite struct {
 	suite.Suite
 	status  int
 	body    string
 	headers http.Header
-	resp    *reponseWriter
+	resp    *fakers.ReponseWriter
 	handler *ResponseHandler
 }
 
@@ -21,7 +26,7 @@ func (s *ResponseHandlerSuite) SetupTest() {
 	s.body = "model"
 	s.headers = http.Header{}
 	s.headers.Add("default", "header")
-	s.resp = &reponseWriter{
+	s.resp = &fakers.ReponseWriter{
 		Headers: s.headers,
 	}
 	s.handler = NewResponseHandler()
@@ -46,7 +51,7 @@ func (s *ResponseHandlerSuite) TestBuildResponseWithHeader_Empty() {
 }
 
 func (s *ResponseHandlerSuite) TestBuildResponseWithHeader() {
-	model := Model{
+	model := model{
 		Success: true,
 	}
 
@@ -59,7 +64,7 @@ func (s *ResponseHandlerSuite) TestBuildResponseWithHeader() {
 }
 
 func (s *ResponseHandlerSuite) TestBuildResponseWithHeader_Multiple() {
-	model := Model{
+	model := model{
 		Success: true,
 	}
 
@@ -80,7 +85,7 @@ func (s *ResponseHandlerSuite) TestBuildResponseWithHeader_Multiple() {
 }
 
 func (s *ResponseHandlerSuite) TestBuildResponseWithHeader_Cookie() {
-	model := Model{
+	model := model{
 		Success: true,
 	}
 

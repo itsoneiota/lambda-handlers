@@ -1,15 +1,28 @@
 package aws
 
 import (
+	"encoding/json"
 	"net/http"
+	"net/url"
 	"testing"
 
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/gorilla/mux"
+	"github.com/itsoneiota/lambda-handlers/v2/pkg/fakers"
 	"github.com/stretchr/testify/suite"
 )
+
+type metasyntactic struct {
+	Foo string `json:"foo"`
+	Bar string `json:"bar"`
+}
 
 type HandlerSuite struct {
 	suite.Suite
 	headers http.Header
+	handler http.HandlerFunc
+	req     *events.APIGatewayProxyRequest
+	resp    *fakers.ReponseWriter
 }
 
 func (s *HandlerSuite) SetupTest() {
@@ -23,6 +36,96 @@ func (s *HandlerSuite) SetupTest() {
 			"bar",
 		},
 	}
+
+	s.handler = func(w http.ResponseWriter, r *http.Request) {
+		params := mux.Vars(r)
+		query, err := url.ParseQuery(r.URL.RawQuery)
+		s.NoError(err)
+
+		m := &metasyntactic{
+			Foo: params["foo"],
+			Bar: query.Get("bar"),
+		}
+
+		b, err := json.Marshal(m)
+		s.NoError(err)
+
+		w.WriteHeader(http.StatusOK)
+		w.Write(b)
+	}
+
+	s.req = &events.APIGatewayProxyRequest{
+		Resource: "/api/foo/{foo}",
+		Path:     "/api/foo/1",
+		PathParameters: map[string]string{
+			"foo": "1",
+		},
+		QueryStringParameters: map[string]string{
+			"bar": "2",
+		},
+	}
+}
+
+func (s *HandlerSuite) TestHandle() {
+	resp, err := handle(&Handler{
+		function: s.handler,
+	})(s.req)
+	s.NoError(err)
+
+	s.Equal(http.StatusOK, resp.StatusCode)
+	s.JSONEq(`{"foo":"1","bar":"2"}`, resp.Body)
+}
+
+func (s *HandlerSuite) TestMiddlewares() {
+	resp, err := handle(&Handler{
+		function: s.handler,
+		Opt: &Opt{
+			middlewares: []Middleware{
+				func(r *http.Request) error {
+					query, err := url.ParseQuery(r.URL.RawQuery)
+					s.NoError(err)
+
+					query.Set("bar", "3")
+
+					r.URL.RawQuery = query.Encode()
+
+					return nil
+				},
+			},
+		},
+	})(s.req)
+	s.NoError(err)
+
+	s.Equal(http.StatusOK, resp.StatusCode)
+	s.JSONEq(`{"foo":"1","bar":"3"}`, resp.Body)
+}
+
+func (s *HandlerSuite) TestInterceptors() {
+	resp, err := handle(&Handler{
+		function: s.handler,
+		Opt: &Opt{
+			interceptors: []Interceptor{
+				func(w *ResponseWriter) error {
+					m := &metasyntactic{}
+					err := json.Unmarshal([]byte(w.Body), m)
+					s.NoError(err)
+
+					m.Bar = "4"
+
+					b, err := json.Marshal(m)
+					s.NoError(err)
+
+					w.Write(b)
+
+					return nil
+				},
+			},
+		},
+	})(s.req)
+	s.NoError(err)
+
+	s.Equal(http.StatusOK, resp.StatusCode)
+	s.JSONEq(`{"foo":"1","bar":"4"}`, resp.Body)
 }
 
 func (s *HandlerSuite) TestEncodeHeaders() {

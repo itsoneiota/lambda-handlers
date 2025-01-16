@@ -1,36 +1,46 @@
 package aws
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/gorilla/mux"
-	"github.com/itsoneiota/lambda-handlers/v2/pkg/handler"
 )
 
 type LambdaCallback = func(request *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error)
 
+type Middleware func(*http.Request) error
+type Interceptor func(*ResponseWriter) error
+
+type Handler struct {
+	function http.HandlerFunc
+	*Opt
+}
+
 func Start(
-	h http.HandlerFunc,
-	beforeHook handler.BeforeHandlerHook,
-	afterHook handler.AfterHandlerHook,
-	defaultHeaders http.Header,
+	hf http.HandlerFunc,
+	opts ...Setter,
 ) {
+	h := &Handler{
+		function: hf,
+		Opt:      &Opt{},
+	}
+
+	for _, o := range opts {
+		o(h.Opt)
+	}
+
 	lambda.Start(
-		getHandler(h, beforeHook, afterHook, defaultHeaders),
+		handle(h),
 	)
 }
 
-func getHandler(
-	h http.HandlerFunc,
-	beforeHook handler.BeforeHandlerHook,
-	afterHook handler.AfterHandlerHook,
-	defaultHeaders http.Header,
-) LambdaCallback {
+func handle(h *Handler) LambdaCallback {
 	return func(r *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-		resp := NewResponseWriter(defaultHeaders)
+		resp := NewResponseWriter(h.headers())
 		req, err := NewHttpRequest(r)
 		if err != nil {
 			return nil, err
@@ -42,16 +52,21 @@ func getHandler(
 		}
 		req = mux.SetURLVars(req, vars)
 
-		cnt := true
-		if beforeHook != nil {
-			cnt = beforeHook(resp, req)
+		for _, middleware := range h.middlewares() {
+			if err := middleware(req); err != nil {
+				fmt.Println(err)
+			}
 		}
 
-		if cnt {
-			h(resp, req)
+		h.function(resp, req)
 
-			if isOkRange(resp.StatusCode) && afterHook != nil {
-				afterHook(resp)
+		if !isOkRange(resp.StatusCode) {
+			return NewEvent(resp), nil
+		}
+
+		for _, interceptor := range h.interceptors() {
+			if err := interceptor(resp); err != nil {
+				fmt.Println(err)
 			}
 		}
 
