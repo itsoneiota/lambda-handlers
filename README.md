@@ -77,13 +77,100 @@ In the case where you want to run this handler in AWS Lambda, simply pass the ha
 
 aws.Start(
 	handler,
-	nil,
-	nil,
 	http.Headers{},
 )
 ```
 
 When implemeting the lambda `Start` method you can also define before hooks (which means you can manipluate a request within you code base), or after hooks (for maniplate the response object of a handler). Any default headers that you wish to be added to your response can be defined as the parameter of the `Start` method.
+
+### ResponseWriter
+The `aws.ResponseWriter` inherits the `events.APIGatewayProxyResponse` to fulfill the `http.ResponseWriter` contract. Allow you to access the response `Header`, `Write` data and `WriteHeader` status code to the response.
+
+With this you can also access methods that are available on the `events.APIGatewayProxyResponse`. such as `StatusCode`, `Headers`, `MultiValueHeaders`, `Body` and `IsBase64Encoded`.
+
+### Middlewares
+Middlewares can be used on a handler, which will be run before the actual handler function.
+
+These can be be added using the `WithMiddlewares` setter method on the `Start` function.
+
+```go
+aws.Start(
+	handler,
+	aws.WithMiddleware(middleware)
+)
+```
+
+Mutliple middlewares can be passed through in the method, which will be chained in the given order that they are passed through.
+
+Any middleware that is being used on this must fulfill the `Middleware` contract, which is shown below:
+
+```go
+type Middleware func(*http.Request) (*http.Request, error)
+```
+
+Within the middleware you can manipulate the `http.Request`, including the query parameters:
+
+```go
+func(r *http.Request) (*http.Request, error) {
+	query, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	query.Set("bar", "3")
+
+	r.URL.RawQuery = query.Encode()
+
+	return r, nil
+}
+```
+
+and request context:
+
+```go
+func(r *http.Request) (*http.Request, error) {
+	ctx := context.WithValue(r.Context(), "baz", "4")
+
+	return r.WithContext(ctx), nil
+},
+```
+
+### Interceptors
+Interceptors can be used to manipulate the handler response before it is commuincated back in the request.
+
+These can be be added using the `WithInterceptors` setter method on the `Start` function.
+
+```go
+aws.Start(
+	handler,
+	aws.WithInterceptors(interceptor)
+)
+```
+
+Any interceptor that is being used on this must fulfill the `Interceptor` contract, which is shown below:
+
+```go
+type Interceptor func(*aws.ResponseWriter) error
+```
+
+In order to manipulate the handler response you can take the `aws.ResponseWriter` `Body` to change the response, and then add it back to the `aws.ResponseWriter`, e.g.:
+
+```go
+func(w *ResponseWriter) error {
+	m := &metasyntactic{}
+	err := json.Unmarshal([]byte(w.Body), m)
+	s.NoError(err)
+
+	m.Bar = "4"
+
+	b, err := json.Marshal(m)
+	s.NoError(err)
+
+	w.Write(b)
+
+	return nil
+},
+```
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.

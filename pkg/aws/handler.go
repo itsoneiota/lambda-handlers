@@ -12,7 +12,7 @@ import (
 
 type LambdaCallback = func(request *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error)
 
-type Middleware func(*http.Request) error
+type Middleware func(*http.Request) (*http.Request, error)
 type Interceptor func(*ResponseWriter) error
 
 type Handler struct {
@@ -53,7 +53,9 @@ func handle(h *Handler) LambdaCallback {
 		req = mux.SetURLVars(req, vars)
 
 		for _, middleware := range h.middlewares() {
-			if err := middleware(req); err != nil {
+			var err error
+			req, err = middleware(req)
+			if err != nil {
 				fmt.Println(err)
 			}
 		}

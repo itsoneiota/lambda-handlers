@@ -11,18 +11,18 @@ import (
 
 type ResponseWriter struct {
 	*events.APIGatewayProxyResponse
-	defaulHeaders http.Header
+	headers http.Header
 }
 
 func NewResponseWriter(headers http.Header) *ResponseWriter {
 	return &ResponseWriter{
 		APIGatewayProxyResponse: &events.APIGatewayProxyResponse{},
-		defaulHeaders:           headers,
+		headers:                 headers,
 	}
 }
 
 func (w *ResponseWriter) Header() http.Header {
-	return w.defaulHeaders
+	return w.headers
 }
 
 func (w *ResponseWriter) Write(body []byte) (int, error) {

@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/url"
@@ -15,6 +16,7 @@ import (
 type metasyntactic struct {
 	Foo string `json:"foo"`
 	Bar string `json:"bar"`
+	Baz string `json:"baz"`
 }
 
 type HandlerSuite struct {
@@ -47,6 +49,10 @@ func (s *HandlerSuite) SetupTest() {
 			Bar: query.Get("bar"),
 		}
 
+		if v := r.Context().Value("baz"); v != nil {
+			m.Baz = v.(string)
+		}
+
 		b, err := json.Marshal(m)
 		s.NoError(err)
 
@@ -73,7 +79,7 @@ func (s *HandlerSuite) TestHandle() {
 	s.NoError(err)
 
 	s.Equal(http.StatusOK, resp.StatusCode)
-	s.JSONEq(`{"foo":"1","bar":"2"}`, resp.Body)
+	s.JSONEq(`{"foo":"1","bar":"2","baz":""}`, resp.Body)
 }
 
 func (s *HandlerSuite) TestMiddlewares() {
@@ -81,7 +87,7 @@ func (s *HandlerSuite) TestMiddlewares() {
 		function: s.handler,
 		Opt: &Opt{
 			middlewares: []Middleware{
-				func(r *http.Request) error {
+				func(r *http.Request) (*http.Request, error) {
 					query, err := url.ParseQuery(r.URL.RawQuery)
 					s.NoError(err)
 
@@ -89,7 +95,12 @@ func (s *HandlerSuite) TestMiddlewares() {
 
 					r.URL.RawQuery = query.Encode()
 
-					return nil
+					return r, nil
+				},
+				func(r *http.Request) (*http.Request, error) {
+					ctx := context.WithValue(r.Context(), "baz", "4")
+
+					return r.WithContext(ctx), nil
 				},
 			},
 		},
@@ -97,7 +108,7 @@ func (s *HandlerSuite) TestMiddlewares() {
 	s.NoError(err)
 
 	s.Equal(http.StatusOK, resp.StatusCode)
-	s.JSONEq(`{"foo":"1","bar":"3"}`, resp.Body)
+	s.JSONEq(`{"foo":"1","bar":"3","baz":"4"}`, resp.Body)
 }
 
 func (s *HandlerSuite) TestInterceptors() {
@@ -125,7 +136,27 @@ func (s *HandlerSuite) TestInterceptors() {
 	s.NoError(err)
 
 	s.Equal(http.StatusOK, resp.StatusCode)
-	s.JSONEq(`{"foo":"1","bar":"4"}`, resp.Body)
+	s.JSONEq(`{"foo":"1","bar":"4","baz":""}`, resp.Body)
+}
+
+func (s *HandlerSuite) TestHeaders() {
+	resp, err := handle(&Handler{
+		function: func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("bar", "baz")
+		},
+		Opt: &Opt{
+			headers: http.Header{
+				"foo": {
+					"bar",
+				},
+			},
+		},
+	})(s.req)
+	s.NoError(err)
+
+	s.NotEmpty(resp.Headers)
+	s.Equal("bar", resp.Headers["foo"])
+	s.Equal("baz", resp.Headers["Bar"])
 }
 
 func (s *HandlerSuite) TestEncodeHeaders() {
