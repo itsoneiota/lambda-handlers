@@ -125,7 +125,7 @@ These can be be added using the `WithMiddlewares` setter method on the `Start` f
 ```go
 aws.Start(
 	handler,
-	aws.WithMiddleware(middleware)
+	aws.WithMiddlewares(middleware)
 )
 ```
 
