@@ -46,34 +46,36 @@ func TestGetHandler(t *testing.T) {
 
 	h := &Handler{
 		handler: testHandler,
-		interceptors: []Interceptor{
-			func(r *handler.Response) *handler.Response {
-				m := &metasyntactic{}
-				err := json.Unmarshal([]byte(r.Body), m)
-				assert.NoError(t, err)
+		Opt: &Opt{
+			interceptors: []Interceptor{
+				func(r *handler.Response) *handler.Response {
+					m := &metasyntactic{}
+					err := json.Unmarshal([]byte(r.Body), m)
+					assert.NoError(t, err)
 
-				m.Bar = "interceptor 1"
+					m.Bar = "interceptor 1"
 
-				b, err := json.Marshal(m)
-				assert.NoError(t, err)
+					b, err := json.Marshal(m)
+					assert.NoError(t, err)
 
-				r.Body = string(b)
+					r.Body = string(b)
 
-				return r
-			},
-			func(r *handler.Response) *handler.Response {
-				m := &metasyntactic{}
-				err := json.Unmarshal([]byte(r.Body), m)
-				assert.NoError(t, err)
+					return r
+				},
+				func(r *handler.Response) *handler.Response {
+					m := &metasyntactic{}
+					err := json.Unmarshal([]byte(r.Body), m)
+					assert.NoError(t, err)
 
-				m.Bar = "interceptor 2"
+					m.Bar = "interceptor 2"
 
-				b, err := json.Marshal(m)
-				assert.NoError(t, err)
+					b, err := json.Marshal(m)
+					assert.NoError(t, err)
 
-				r.Body = string(b)
+					r.Body = string(b)
 
-				return r
+					return r
+				},
 			},
 		},
 	}

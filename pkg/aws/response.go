@@ -13,11 +13,15 @@ type LambdaCallback = func(request *events.APIGatewayProxyRequest) (*events.APIG
 
 func Start(
 	hf handler.HandlerFunc,
-	interceptors ...Interceptor,
+	opts ...Setter,
 ) {
 	h := &Handler{
-		handler:      hf,
-		interceptors: interceptors,
+		handler: hf,
+		Opt:     &Opt{},
+	}
+
+	for _, o := range opts {
+		o(h.Opt)
 	}
 
 	lambda.Start(
@@ -29,7 +33,7 @@ func getHandler(h *Handler) LambdaCallback {
 	return func(r *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 		result := h.handler(NewAWSContext(r.RequestContext), NewAWSRequest(r))
 
-		for _, i := range h.interceptors {
+		for _, i := range h.interceptors() {
 			result = i(result)
 		}
 
