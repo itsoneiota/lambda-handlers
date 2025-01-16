@@ -1,11 +1,11 @@
 package example
 
 import (
-	"errors"
+	"encoding/json"
 	"net/http"
 	"net/url"
 
-	"github.com/itsoneiota/lambda-handlers/v2/pkg/handler"
+	"github.com/itsoneiota/lambda-handlers/v2/pkg/serviceerror"
 )
 
 type ExampleModel struct {
@@ -19,38 +19,65 @@ type Connector interface {
 
 const findHandlerDefaultCount = 10
 
-// AfterFindHandlerHook is a hook/callback function definition, triggered after the Find connector call on for the FindHandler
-type AfterFindHandlerHook func(interface{}) error
-
 // FindHandler returns a handlers.HandlerFunc which is used for the Find endpoint.
 // The handler calls the Find method of the connector
 func FindHandler(
-	resHander *handler.ResponseHandler,
 	connector Connector,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		token := req.Header.Get("Authorization")
 		if err := connector.Authorize(token); err != nil {
-			resHander.BuildErrorResponse(w, err)
+			e := serviceerror.NewFromErr(err, "")
+
+			w.WriteHeader(e.StatusCode())
+			w.Write(e.Bytes())
+
+			return
 		}
 
 		query, err := url.ParseQuery(req.URL.RawQuery)
 		if err != nil {
-			resHander.BuildErrorResponse(w, err)
+			e := serviceerror.NewFromErr(err, "")
+
+			w.WriteHeader(e.StatusCode())
+			w.Write(e.Bytes())
+
+			return
 		}
 
 		var postcode string
 		if query.Has("postcode") {
 			postcode = query.Get("postcode")
 		} else {
-			resHander.BuildErrorResponse(w, errors.New("postcode required"))
+			e := serviceerror.BadRequest("postcode required")
+
+			w.WriteHeader(e.StatusCode())
+			w.Write(e.Bytes())
+
+			return
 		}
 
 		addresses, err := connector.Find(postcode)
 		if err != nil {
-			resHander.BuildErrorResponse(w, err)
+			e := serviceerror.NewFromErr(err, "")
+
+			w.WriteHeader(e.StatusCode())
+			w.Write(e.Bytes())
+
+			return
 		}
 
-		resHander.BuildResponse(w, http.StatusOK, addresses)
+		b, err := json.Marshal(addresses)
+		if err != nil {
+			e := serviceerror.NewFromErr(err, "")
+
+			w.WriteHeader(e.StatusCode())
+			w.Write(e.Bytes())
+
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Write(b)
 	}
 }

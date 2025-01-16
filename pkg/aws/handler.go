@@ -1,13 +1,15 @@
 package aws
 
 import (
-	"fmt"
+	"encoding/json"
+	"log/slog"
 	"net/http"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/gorilla/mux"
+	"github.com/itsoneiota/lambda-handlers/v2/pkg/serviceerror"
 )
 
 type LambdaCallback = func(request *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error)
@@ -56,39 +58,39 @@ func handle(h *Handler) LambdaCallback {
 			var err error
 			req, err = middleware(req)
 			if err != nil {
-				fmt.Println(err)
+				return errorResponse(resp, serviceerror.NewFromErr(err, ""))
 			}
 		}
 
 		h.function(resp, req)
 
 		if !isOkRange(resp.StatusCode) {
-			return NewEvent(resp), nil
+			return NewEvent(resp)
 		}
 
 		for _, interceptor := range h.interceptors() {
 			if err := interceptor(resp); err != nil {
-				fmt.Println(err)
+				return errorResponse(resp, serviceerror.NewFromErr(err, ""))
 			}
 		}
 
-		return NewEvent(resp), nil
+		return NewEvent(resp)
 	}
 }
 
-func NewEvent(r *ResponseWriter) *events.APIGatewayProxyResponse {
+func NewEvent(w *ResponseWriter) (*events.APIGatewayProxyResponse, error) {
 	headers := map[string]string{}
-	for k, v := range r.Header() {
+	for k, v := range w.Header() {
 		if len(v) > 0 {
 			headers[k] = v[0]
 		}
 	}
 
 	return &events.APIGatewayProxyResponse{
-		StatusCode: r.StatusCode,
+		StatusCode: w.StatusCode,
 		Headers:    headers,
-		Body:       r.Body,
-	}
+		Body:       w.Body,
+	}, nil
 }
 
 func encodeHeaders(h http.Header) map[string]string {
@@ -118,4 +120,18 @@ func unique(slice []string) []string {
 
 func isOkRange(statusCode int) bool {
 	return statusCode >= http.StatusOK && statusCode < http.StatusMultipleChoices
+}
+
+func errorResponse(w *ResponseWriter, srvErr *serviceerror.ServiceError) (*events.APIGatewayProxyResponse, error) {
+	w.WriteHeader(srvErr.StatusCode())
+
+	b, err := json.Marshal(srvErr)
+	if err != nil {
+		slog.Error(err.Error())
+		b, _ = json.Marshal(serviceerror.InternalServerError(err.Error()))
+	}
+
+	w.Write(b)
+
+	return NewEvent(w)
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/gorilla/mux"
 	"github.com/itsoneiota/lambda-handlers/v2/pkg/fakers"
+	"github.com/itsoneiota/lambda-handlers/v2/pkg/serviceerror"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -82,6 +83,26 @@ func (s *HandlerSuite) TestHandle() {
 	s.JSONEq(`{"foo":"1","bar":"2","baz":""}`, resp.Body)
 }
 
+func (s *HandlerSuite) TestHeaders() {
+	resp, err := handle(&Handler{
+		function: func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("bar", "baz")
+		},
+		Opt: &Opt{
+			headers: http.Header{
+				"foo": {
+					"bar",
+				},
+			},
+		},
+	})(s.req)
+	s.NoError(err)
+
+	s.NotEmpty(resp.Headers)
+	s.Equal("bar", resp.Headers["foo"])
+	s.Equal("baz", resp.Headers["Bar"])
+}
+
 func (s *HandlerSuite) TestMiddlewares() {
 	resp, err := handle(&Handler{
 		function: s.handler,
@@ -109,6 +130,23 @@ func (s *HandlerSuite) TestMiddlewares() {
 
 	s.Equal(http.StatusOK, resp.StatusCode)
 	s.JSONEq(`{"foo":"1","bar":"3","baz":"4"}`, resp.Body)
+}
+
+func (s *HandlerSuite) TestMiddlewareError() {
+	resp, err := handle(&Handler{
+		function: s.handler,
+		Opt: &Opt{
+			middlewares: []Middleware{
+				func(r *http.Request) (*http.Request, error) {
+					return r, serviceerror.BadRequest("something bad has happened")
+				},
+			},
+		},
+	})(s.req)
+	s.NoError(err)
+
+	s.Equal(http.StatusBadRequest, resp.StatusCode)
+	s.JSONEq(`{"error":{"id":"BAD_REQUEST","code":"BAD_REQUEST","message":"something bad has happened"}}`, resp.Body)
 }
 
 func (s *HandlerSuite) TestInterceptors() {
@@ -139,24 +177,21 @@ func (s *HandlerSuite) TestInterceptors() {
 	s.JSONEq(`{"foo":"1","bar":"4","baz":""}`, resp.Body)
 }
 
-func (s *HandlerSuite) TestHeaders() {
+func (s *HandlerSuite) TestInterceptorError() {
 	resp, err := handle(&Handler{
-		function: func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("bar", "baz")
-		},
+		function: s.handler,
 		Opt: &Opt{
-			headers: http.Header{
-				"foo": {
-					"bar",
+			interceptors: []Interceptor{
+				func(w *ResponseWriter) error {
+					return serviceerror.BadRequest("something bad has happened")
 				},
 			},
 		},
 	})(s.req)
 	s.NoError(err)
 
-	s.NotEmpty(resp.Headers)
-	s.Equal("bar", resp.Headers["foo"])
-	s.Equal("baz", resp.Headers["Bar"])
+	s.Equal(http.StatusBadRequest, resp.StatusCode)
+	s.JSONEq(`{"error":{"id":"BAD_REQUEST","code":"BAD_REQUEST","message":"something bad has happened"}}`, resp.Body)
 }
 
 func (s *HandlerSuite) TestEncodeHeaders() {

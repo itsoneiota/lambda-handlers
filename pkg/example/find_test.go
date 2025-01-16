@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/itsoneiota/lambda-handlers/v2/internal/mocks"
 	"github.com/itsoneiota/lambda-handlers/v2/pkg/aws"
-	"github.com/itsoneiota/lambda-handlers/v2/pkg/handler"
+	"github.com/itsoneiota/lambda-handlers/v2/pkg/serviceerror"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -39,13 +39,13 @@ func (s *FindHandlerSuite) SetupTest() {
 
 }
 
-func (s *FindHandlerSuite) Connector() Connector {
+func (s *FindHandlerSuite) Connector(err error) Connector {
 	c := new(mocks.Connector)
 
 	c.On("Authorize",
 		s.token,
 	).Return(
-		nil,
+		err,
 	).Times(1)
 
 	c.On("Find",
@@ -59,22 +59,44 @@ func (s *FindHandlerSuite) Connector() Connector {
 }
 
 func (s *FindHandlerSuite) TestHandler() {
-	resHander := handler.NewResponseHandler()
 	res := aws.NewResponseWriter(
 		http.Header{
 			"Content-Type": {"application/json"},
 		},
 	)
 
-	// Asserts
-	FindHandler(resHander, s.Connector())(res, s.req)
+	FindHandler(s.Connector(nil))(res, s.req)
 
-	awsRes := aws.NewEvent(res)
+	awsRes, err := aws.NewEvent(res)
+	s.NoError(err)
 	expectAwsRes := &events.APIGatewayProxyResponse{
-		StatusCode:        200,
+		StatusCode:        http.StatusOK,
 		Headers:           map[string]string{"Content-Type": "application/json"},
 		MultiValueHeaders: map[string][]string(nil),
-		Body:              "{\"success\":false}",
+		Body:              `{"success":false}`,
+		IsBase64Encoded:   false,
+	}
+
+	s.IsType(&events.APIGatewayProxyResponse{}, awsRes)
+	s.Equal(expectAwsRes, awsRes)
+}
+
+func (s *FindHandlerSuite) TestHandlerError() {
+	res := aws.NewResponseWriter(
+		http.Header{
+			"Content-Type": {"application/json"},
+		},
+	)
+
+	FindHandler(s.Connector(serviceerror.BadRequest("something bad has happened")))(res, s.req)
+
+	awsRes, err := aws.NewEvent(res)
+	s.NoError(err)
+	expectAwsRes := &events.APIGatewayProxyResponse{
+		StatusCode:        http.StatusBadRequest,
+		Headers:           map[string]string{"Content-Type": "application/json"},
+		MultiValueHeaders: map[string][]string(nil),
+		Body:              `{"error":{"id":"BAD_REQUEST","code":"BAD_REQUEST","message":"something bad has happened"}}`,
 		IsBase64Encoded:   false,
 	}
 

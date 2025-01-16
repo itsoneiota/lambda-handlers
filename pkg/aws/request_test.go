@@ -56,7 +56,7 @@ func (s *RequestSuite) SetupTest() {
 			HTTPMethod:   http.MethodPut,
 			APIID:        "api-id",
 		},
-		Body:            "{\"name\": \"Example Product\"}",
+		Body:            `{"name": "Example Product"}`,
 		IsBase64Encoded: false,
 	}
 }
@@ -95,7 +95,7 @@ func (s *RequestSuite) TestNewHttpRequestEncodedBody() {
 
 	b, err := io.ReadAll(req.Body)
 	s.NoError(err)
-	s.Equal("{\"name\": \"Example Product\"}", string(b))
+	s.Equal(`{"name": "Example Product"}`, string(b))
 }
 
 func (s *RequestSuite) TestNewHttpRequestMultipartForm() {

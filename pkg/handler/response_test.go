@@ -72,7 +72,7 @@ func (s *ResponseHandlerSuite) TestBuildResponseWithHeader_Multiple() {
 		"Server-Timing": []string{
 			"cdn-cache; desc=HIT",
 			"edge; dur=1",
-			"ak_p; desc=\"467247_400071605_276706062_672_15674_1_0\";dur=1",
+			`ak_p; desc="467247_400071605_276706062_672_15674_1_0";dur=1`,
 		},
 	}
 

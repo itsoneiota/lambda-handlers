@@ -1,7 +1,9 @@
 package serviceerror
 
 import (
+	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 )
 
@@ -99,16 +101,33 @@ func NewServiceError(id, code, message string) *ServiceError {
 
 // NewFromErr returns a new service error built from an existing error
 func NewFromErr(err error, message string) *ServiceError {
+	id := CodeInternalServerError
 	code := CodeInternalServerError
 	if e, ok := err.(*ServiceError); ok {
+		id = e.Err.ID
 		code = e.Code()
 	}
-	return &ServiceError{
-		Error{
-			Code:    code,
-			Message: fmt.Sprintf("%s: %s", message, err.Error()),
-		},
+
+	errMsg := err.Error()
+	if message != "" {
+		if err.Error() == "" {
+			errMsg = fmt.Sprintf("%s", err.Error())
+		} else {
+			errMsg = fmt.Sprintf("%s: %s", message, err.Error())
+		}
 	}
+
+	return NewServiceError(id, code, errMsg)
+}
+
+func (s *ServiceError) Bytes() []byte {
+	b, err := json.Marshal(s)
+	if err != nil {
+		slog.Error(err.Error())
+		b, _ = json.Marshal(InternalServerError(err.Error()))
+	}
+
+	return b
 }
 
 // InternalServerError is a helper method for creating a service error with an 'InternalServerError' code
