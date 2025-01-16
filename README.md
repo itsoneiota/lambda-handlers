@@ -65,7 +65,7 @@ In the case where you want to run this handler in AWS Lambda, simply pass the ha
 aws.Start(New(testHandler).Run())
 ```
 
-## Middleware
+### Middleware
 
 Middleware can be abled by using the `Middlewares` method on the handler:
 ```go
@@ -99,6 +99,44 @@ aws.Start(New(testHandler).Middleware(
 	testMiddlewareTwo,
 ).Run())
 ```
+
+### Interceptors
+Interceptors can be used to manipulate the handler response before it is commuincated back in the request.
+
+These can be be added using the `WithInterceptors` setter method on the `Start` function.
+
+```go
+aws.Start(
+	handler,
+	aws.WithInterceptors(interceptor)
+)
+```
+
+Any interceptor that is being used on this must fulfill the `Interceptor` contract, which is shown below:
+
+```go
+type Interceptor func(*handler.Response) *handler.Response
+```
+
+In order to manipulate the handler response you can take the `handler.Response` `Body` to change the response, and then add it back to the `handler.Response`, e.g.:
+
+```go
+func(r *handler.Response) *handler.Response {
+	m := &metasyntactic{}
+	err := json.Unmarshal([]byte(r.Body), m)
+	assert.NoError(t, err)
+
+	m.Bar = "interceptor 1"
+
+	b, err := json.Marshal(m)
+	assert.NoError(t, err)
+
+	r.Body = string(b)
+
+	return r
+},
+```
+
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.

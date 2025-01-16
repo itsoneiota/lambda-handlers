@@ -30,7 +30,7 @@ func TestEncodeHeaders(t *testing.T) {
 	assert.Equal(t, expect, encodeHeaders(h))
 }
 
-func TestGetHandler(t *testing.T) {
+func TestHandle(t *testing.T) {
 	type metasyntactic struct {
 		Foo string `json:"foo"`
 		Bar string `json:"bar"`
@@ -81,7 +81,7 @@ func TestGetHandler(t *testing.T) {
 	}
 
 	req := &events.APIGatewayProxyRequest{}
-	resp, err := getHandler(h)(req)
+	resp, err := handle(h)(req)
 	assert.NoError(t, err)
 
 	assert.JSONEq(t, `{"foo":"handler","bar":"interceptor 2"}`, resp.Body)

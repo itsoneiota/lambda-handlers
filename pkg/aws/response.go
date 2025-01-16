@@ -24,12 +24,10 @@ func Start(
 		o(h.Opt)
 	}
 
-	lambda.Start(
-		getHandler(h),
-	)
+	lambda.Start(handle(h))
 }
 
-func getHandler(h *Handler) LambdaCallback {
+func handle(h *Handler) LambdaCallback {
 	return func(r *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 		result := h.handler(NewAWSContext(r.RequestContext), NewAWSRequest(r))
 
