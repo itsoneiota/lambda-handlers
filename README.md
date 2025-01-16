@@ -30,37 +30,64 @@ type Connector interface {
 
 const findHandlerDefaultCount = 10
 
-func FindHandler(
-	resHander *handler.ResponseHandler,
-	connector Connector,
-) http.HandlerFunc {
+func FindHandler(connector Connector) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		token := req.Header.Get("Authorization")
 		if err := connector.Authorize(token); err != nil {
-			resHander.BuildErrorResponse(w, err)
+			e := serviceerror.NewFromErr(err, "")
+
+			w.WriteHeader(e.StatusCode())
+			w.Write(e.Bytes())
+
+			return
 		}
 
 		query, err := url.ParseQuery(req.URL.RawQuery)
 		if err != nil {
-			resHander.BuildErrorResponse(w, err)
+			e := serviceerror.NewFromErr(err, "")
+
+			w.WriteHeader(e.StatusCode())
+			w.Write(e.Bytes())
+
+			return
 		}
 
 		var postcode string
 		if query.Has("postcode") {
 			postcode = query.Get("postcode")
 		} else {
-			resHander.BuildErrorResponse(w, errors.New("postcode required"))
+			e := serviceerror.BadRequest("postcode required")
+
+			w.WriteHeader(e.StatusCode())
+			w.Write(e.Bytes())
+
+			return
 		}
 
 		addresses, err := connector.Find(postcode)
 		if err != nil {
-			resHander.BuildErrorResponse(w, err)
+			e := serviceerror.NewFromErr(err, "")
+
+			w.WriteHeader(e.StatusCode())
+			w.Write(e.Bytes())
+
+			return
 		}
 
-		resHander.BuildResponse(w, http.StatusOK, addresses)
+		b, err := json.Marshal(addresses)
+		if err != nil {
+			e := serviceerror.NewFromErr(err, "")
+
+			w.WriteHeader(e.StatusCode())
+			w.Write(e.Bytes())
+
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Write(b)
 	}
 }
-
 ```
 
 In the case where you want to run this handler in a Mux router, call the `CreateHandler` method, pass in the generic handler defined above and pass it into the HandleFunc method on the router.

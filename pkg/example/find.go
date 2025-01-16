@@ -21,9 +21,7 @@ const findHandlerDefaultCount = 10
 
 // FindHandler returns a handlers.HandlerFunc which is used for the Find endpoint.
 // The handler calls the Find method of the connector
-func FindHandler(
-	connector Connector,
-) http.HandlerFunc {
+func FindHandler(connector Connector) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		token := req.Header.Get("Authorization")
 		if err := connector.Authorize(token); err != nil {
