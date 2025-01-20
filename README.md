@@ -51,12 +51,19 @@ func FindHandler(
 }
 ```
 
-In the case where you want to run this handler in a Mux router, call the `CreateHandler` method, pass in the generic handler defined above and pass it into the HandleFunc method on the router.
+In the case where you want to run this handler in a Mux router, call the `New` method, pass in the generic handler defined above and pass it into the HandleFunc method on the router.
 
 ```go
-r.HandleFunc("/test", mux.CreateHandler(handler.New(example.FindHandler(c, nil, nil)).Run()))
+r.HandleFunc("/test", mux.New(handler.New(example.FindHandler(c)).Run()).Run())
 
 log.Fatal(http.ListenAndServe("localhost:8080", r))
+```
+
+You can also pass Middlewares and Interceptors through to the Mux Handler by passing `WithMiddlewares` or/and `WithInterceptors` through as an optional paramter on the `New` method.
+
+```go
+r.HandleFunc("/test", mux.New(handler.New(example.FindHandler(c), mux.WithMiddlwares(example.Middleware())).Run()).Run())
+
 ```
 
 In the case where you want to run this handler in AWS Lambda, simply pass the handler into the `Start` method found within the `aws` package of this module.

@@ -62,6 +62,8 @@ func (r *Request) QueryParams() url.Values {
 func (r *Request) SetQueryByName(name, set string) {
 	v := r.request.URL.Query()
 	v.Set(name, set)
+
+	r.request.URL.RawQuery = v.Encode()
 }
 
 // PathByName gets a query parameter by its name eg. "locale"
