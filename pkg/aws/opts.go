@@ -1,13 +1,15 @@
 package aws
 
+import "github.com/itsoneiota/lambda-handlers/pkg/handler"
+
 type Setter func(*Opt)
 
 type Opt struct {
-	interceptors []Interceptor
+	interceptors []handler.Interceptor
 }
 
-func (h *Handler) interceptors() []Interceptor {
-	result := []Interceptor{}
+func (h *Handler) interceptors() []handler.Interceptor {
+	result := []handler.Interceptor{}
 	if h.Opt != nil {
 		result = h.Opt.interceptors
 	}
@@ -15,7 +17,7 @@ func (h *Handler) interceptors() []Interceptor {
 	return result
 }
 
-func WithInterceptors(i ...Interceptor) Setter {
+func WithInterceptors(i ...handler.Interceptor) Setter {
 	return func(o *Opt) {
 		o.interceptors = i
 	}

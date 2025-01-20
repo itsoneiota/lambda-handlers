@@ -4,9 +4,6 @@ import (
 	"github.com/itsoneiota/lambda-handlers/pkg/handler"
 )
 
-type Middleware func(*Request) (*Request, error)
-type Interceptor func(*ResponseWriter) error
-
 type Handler struct {
 	function handler.HandlerFunc
 	*opt

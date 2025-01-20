@@ -2,12 +2,12 @@ package mux
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"testing"
 
 	"github.com/itsoneiota/lambda-handlers/pkg/handler"
-	"github.com/itsoneiota/lambda-handlers/pkg/serviceerror"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -33,25 +33,26 @@ func TestRun(t *testing.T) {
 		}}
 	}
 
-	resp := &ResponseWriter{}
+	resp := &fakeResponseWriter{
+		headers: http.Header{},
+	}
 	req := &http.Request{}
 	New(testHandler, WithHeaders(http.Header{
 		"default": {"header"},
 	})).Run()(resp, req)
 
-	assert.Equal(t, http.StatusOK, resp.Status)
-	assert.Equal(t, `{"foo":"foo","bar":"","baz":""}`, string(resp.Body))
-	assert.NotEmpty(t, resp.Headers)
-	assert.Equal(t, "header", resp.Headers.Get("default"))
-	assert.Equal(t, "bar", resp.Headers.Get("foo"))
+	assert.Equal(t, http.StatusOK, resp.statusCode)
+	assert.Equal(t, `{"foo":"foo","bar":"","baz":""}`, string(resp.body))
+	assert.NotEmpty(t, resp.headers)
+	assert.Equal(t, "header", resp.headers.Get("default"))
+	assert.Equal(t, "bar", resp.headers.Get("foo"))
 }
 
 func TestMiddlewares(t *testing.T) {
 	testHandler := func(ctx handler.Contexter, req handler.Requester) *handler.Response {
 		m := &metasyntactic{
-			Foo: "foo",
+			Foo: fmt.Sprintf("%d", ctx.Value("foo").(int)),
 			Bar: req.QueryParams().Get("bar"),
-			Baz: req.QueryParams().Get("baz"),
 		}
 
 		b, err := json.Marshal(m)
@@ -60,46 +61,30 @@ func TestMiddlewares(t *testing.T) {
 		return &handler.Response{StatusCode: http.StatusOK, Body: string(b)}
 	}
 
-	resp := &ResponseWriter{}
+	resp := &fakeResponseWriter{
+		headers: http.Header{},
+	}
 	req := &http.Request{
 		Method: http.MethodGet,
 		URL:    &url.URL{},
 	}
 	New(testHandler, WithMiddlewares(
-		func(r *Request) (*Request, error) {
-			r.SetQueryByName("bar", "3")
-
-			return r, nil
+		func(next handler.HandlerFunc) handler.HandlerFunc {
+			return func(ctx handler.Contexter, req handler.Requester) *handler.Response {
+				ctx.SetValue("foo", 1)
+				return next(ctx, req)
+			}
 		},
-		func(r *Request) (*Request, error) {
-			r.SetQueryByName("baz", "4")
-
-			return r, nil
-		},
-	)).Run()(resp, req)
-
-	assert.Equal(t, http.StatusOK, resp.Status)
-	assert.Equal(t, `{"foo":"foo","bar":"3","baz":"4"}`, string(resp.Body))
-}
-
-func TestMiddlewaresError(t *testing.T) {
-	testHandler := func(ctx handler.Contexter, req handler.Requester) *handler.Response {
-		return &handler.Response{StatusCode: http.StatusOK}
-	}
-
-	resp := &ResponseWriter{}
-	req := &http.Request{
-		Method: http.MethodGet,
-		URL:    &url.URL{},
-	}
-	New(testHandler, WithMiddlewares(
-		func(r *Request) (*Request, error) {
-			return r, serviceerror.BadRequest("something bad has happened")
+		func(next handler.HandlerFunc) handler.HandlerFunc {
+			return func(ctx handler.Contexter, req handler.Requester) *handler.Response {
+				req.SetQueryByName("bar", "2")
+				return next(ctx, req)
+			}
 		},
 	)).Run()(resp, req)
 
-	assert.Equal(t, http.StatusBadRequest, resp.Status)
-	assert.Equal(t, `{"error":{"id":"BAD_REQUEST","code":"BAD_REQUEST","message":"something bad has happened"}}`, string(resp.Body))
+	assert.Equal(t, http.StatusOK, resp.statusCode)
+	assert.Equal(t, `{"foo":"1","bar":"2","baz":""}`, string(resp.body))
 }
 
 func TestInterceptors(t *testing.T) {
@@ -114,15 +99,17 @@ func TestInterceptors(t *testing.T) {
 		return &handler.Response{StatusCode: http.StatusOK, Body: string(b)}
 	}
 
-	resp := &ResponseWriter{}
+	resp := &fakeResponseWriter{
+		headers: http.Header{},
+	}
 	req := &http.Request{
 		Method: http.MethodGet,
 		URL:    &url.URL{},
 	}
 	New(testHandler, WithInterceptors(
-		func(w *ResponseWriter) error {
+		func(resp *handler.Response) *handler.Response {
 			m := &metasyntactic{}
-			err := json.Unmarshal([]byte(w.Body), m)
+			err := json.Unmarshal([]byte(resp.Body), m)
 			assert.NoError(t, err)
 
 			m.Bar = "4"
@@ -130,39 +117,12 @@ func TestInterceptors(t *testing.T) {
 			b, err := json.Marshal(m)
 			assert.NoError(t, err)
 
-			w.Write(b)
+			resp.Body = string(b)
 
-			return nil
+			return resp
 		},
 	)).Run()(resp, req)
 
-	assert.Equal(t, http.StatusOK, resp.Status)
-	assert.Equal(t, `{"foo":"foo","bar":"4","baz":""}`, string(resp.Body))
-}
-
-func TestInterceptorsError(t *testing.T) {
-	testHandler := func(ctx handler.Contexter, req handler.Requester) *handler.Response {
-		m := &metasyntactic{
-			Foo: "foo",
-		}
-
-		b, err := json.Marshal(m)
-		assert.NoError(t, err)
-
-		return &handler.Response{StatusCode: http.StatusOK, Body: string(b)}
-	}
-
-	resp := &ResponseWriter{}
-	req := &http.Request{
-		Method: http.MethodGet,
-		URL:    &url.URL{},
-	}
-	New(testHandler, WithInterceptors(
-		func(w *ResponseWriter) error {
-			return serviceerror.BadRequest("something bad has happened")
-		},
-	)).Run()(resp, req)
-
-	assert.Equal(t, http.StatusBadRequest, resp.Status)
-	assert.Equal(t, `{"error":{"id":"BAD_REQUEST","code":"BAD_REQUEST","message":"something bad has happened"}}`, string(resp.Body))
+	assert.Equal(t, http.StatusOK, resp.statusCode)
+	assert.Equal(t, `{"foo":"foo","bar":"4","baz":""}`, string(resp.body))
 }

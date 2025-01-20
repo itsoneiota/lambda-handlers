@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+
+	"github.com/itsoneiota/lambda-handlers/pkg/serviceerror"
 )
 
 // Generic Response object which is used in every handler
@@ -57,8 +59,8 @@ func NewErrorResponse(
 	} else {
 		// If its a general error - we don't want to return the message as its a code/integration issue.
 		// We don't want those messages being shown to users.
-		serviceErr = &ServiceError{
-			Err: Error{
+		serviceErr = &serviceerror.ServiceError{
+			Err: serviceerror.Error{
 				ID:      "UNKNOWN_ERROR",
 				Code:    "UNKNOWN_ERROR",
 				Message: "An unknown error occurred",
@@ -74,13 +76,7 @@ func NewErrorResponse(
 func isServiceError(err error) (bool, int) {
 	var code int
 
-	type serviceError interface {
-		Code() string
-		Error() string
-		StatusCode() int
-	}
-
-	se, isSe := err.(serviceError)
+	se, isSe := err.(*serviceerror.ServiceError)
 
 	if isSe {
 		code = se.StatusCode()

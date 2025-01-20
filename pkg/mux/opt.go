@@ -1,13 +1,17 @@
 package mux
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/itsoneiota/lambda-handlers/pkg/handler"
+)
 
 type Setter func(*opt)
 
 type opt struct {
 	headers      http.Header
-	middlewares  []Middleware
-	interceptors []Interceptor
+	middlewares  []handler.Middleware
+	interceptors []handler.Interceptor
 }
 
 func (h *Handler) headers() http.Header {
@@ -19,8 +23,8 @@ func (h *Handler) headers() http.Header {
 	return result
 }
 
-func (h *Handler) middlewares() []Middleware {
-	result := []Middleware{}
+func (h *Handler) middlewares() []handler.Middleware {
+	result := []handler.Middleware{}
 	if h.opt != nil {
 		result = h.opt.middlewares
 	}
@@ -28,8 +32,8 @@ func (h *Handler) middlewares() []Middleware {
 	return result
 }
 
-func (h *Handler) interceptors() []Interceptor {
-	result := []Interceptor{}
+func (h *Handler) interceptors() []handler.Interceptor {
+	result := []handler.Interceptor{}
 	if h.opt != nil {
 		result = h.opt.interceptors
 	}
@@ -43,13 +47,13 @@ func WithHeaders(h http.Header) Setter {
 	}
 }
 
-func WithMiddlewares(m ...Middleware) Setter {
+func WithMiddlewares(m ...handler.Middleware) Setter {
 	return func(o *opt) {
 		o.middlewares = m
 	}
 }
 
-func WithInterceptors(i ...Interceptor) Setter {
+func WithInterceptors(i ...handler.Interceptor) Setter {
 	return func(o *opt) {
 		o.interceptors = i
 	}

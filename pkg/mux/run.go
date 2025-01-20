@@ -11,33 +11,25 @@ import (
 
 func (h *Handler) Run() func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		resp := NewResponseWriter(h.headers())
-
 		ctx := NewContext(r)
 		req := NewRequest(r)
 
+		f := h.function
 		for _, middleware := range h.middlewares() {
-			var err error
-			req, err = middleware(req)
-			if err != nil {
-				errorResponse(resp, serviceerror.NewFromErr(err, ""))
-
-				writeResponse(resp, w)
-
-				return
-			}
+			middleware(f)(ctx, req)
+			f = middleware(f)
 		}
 
-		handlerResponse(h.function(ctx, req), resp)
+		resp := f(ctx, req)
+
+		handlerResponse(resp, w)
 
 		for _, interceptor := range h.interceptors() {
-			if err := interceptor(resp); err != nil {
-				errorResponse(resp, serviceerror.NewFromErr(err, ""))
+			resp = interceptor(resp)
+		}
 
-				writeResponse(resp, w)
-
-				return
-			}
+		for k, v := range h.headers() {
+			resp.Headers.Add(k, v[0])
 		}
 
 		writeResponse(resp, w)
@@ -46,15 +38,15 @@ func (h *Handler) Run() func(http.ResponseWriter, *http.Request) {
 	}
 }
 
-func writeResponse(resp *ResponseWriter, w http.ResponseWriter) {
+func writeResponse(resp *handler.Response, w http.ResponseWriter) {
 	for key, values := range resp.Headers {
 		for _, value := range values {
 			w.Header().Add(key, value)
 		}
 	}
 
-	w.WriteHeader(resp.Status)
-	if _, err := w.Write(resp.Body); err != nil {
+	w.WriteHeader(resp.StatusCode)
+	if _, err := w.Write([]byte(resp.Body)); err != nil {
 		errorResponse(w, serviceerror.NewFromErr(err, ""))
 
 		return

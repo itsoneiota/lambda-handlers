@@ -47,7 +47,7 @@ func TestHandle(t *testing.T) {
 	h := &Handler{
 		handler: testHandler,
 		Opt: &Opt{
-			interceptors: []Interceptor{
+			interceptors: []handler.Interceptor{
 				func(r *handler.Response) *handler.Response {
 					m := &metasyntactic{}
 					err := json.Unmarshal([]byte(r.Body), m)
