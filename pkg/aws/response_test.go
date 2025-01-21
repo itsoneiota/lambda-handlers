@@ -48,7 +48,11 @@ func TestHandle(t *testing.T) {
 		handler: testHandler,
 		Opt: &Opt{
 			interceptors: []handler.Interceptor{
-				func(r *handler.Response) *handler.Response {
+				func(
+					_ handler.Contexter,
+					_ handler.Requester,
+					r *handler.Response,
+				) *handler.Response {
 					m := &metasyntactic{}
 					err := json.Unmarshal([]byte(r.Body), m)
 					assert.NoError(t, err)
@@ -62,7 +66,11 @@ func TestHandle(t *testing.T) {
 
 					return r
 				},
-				func(r *handler.Response) *handler.Response {
+				func(
+					_ handler.Contexter,
+					_ handler.Requester,
+					r *handler.Response,
+				) *handler.Response {
 					m := &metasyntactic{}
 					err := json.Unmarshal([]byte(r.Body), m)
 					assert.NoError(t, err)

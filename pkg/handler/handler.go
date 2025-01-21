@@ -28,9 +28,9 @@ type Contexter interface {
 	Value(string) any
 }
 
-type HandlerFunc = func(c Contexter, request Requester) *Response
+type HandlerFunc = func(Contexter, Requester) *Response
 
-type Interceptor func(*Response) *Response
+type Interceptor func(Contexter, Requester, *Response) *Response
 
 // Genertic Handler object which is the reciever in every handler method
 type Handler struct {

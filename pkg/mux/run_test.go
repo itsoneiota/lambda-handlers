@@ -107,7 +107,11 @@ func TestInterceptors(t *testing.T) {
 		URL:    &url.URL{},
 	}
 	New(testHandler, WithInterceptors(
-		func(resp *handler.Response) *handler.Response {
+		func(
+			_ handler.Contexter,
+			_ handler.Requester,
+			resp *handler.Response,
+		) *handler.Response {
 			m := &metasyntactic{}
 			err := json.Unmarshal([]byte(resp.Body), m)
 			assert.NoError(t, err)

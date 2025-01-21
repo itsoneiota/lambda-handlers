@@ -29,10 +29,13 @@ func Start(
 
 func handle(h *Handler) LambdaCallback {
 	return func(r *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-		result := h.handler(NewAWSContext(r.RequestContext), NewAWSRequest(r))
+		ctx := NewAWSContext(r.RequestContext)
+		req := NewAWSRequest(r)
+
+		result := h.handler(ctx, req)
 
 		for _, i := range h.interceptors() {
-			result = i(result)
+			result = i(ctx, req, result)
 		}
 
 		return NewEvent(result), nil

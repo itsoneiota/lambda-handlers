@@ -24,7 +24,7 @@ func (h *Handler) Run() func(http.ResponseWriter, *http.Request) {
 		handlerResponse(resp, w)
 
 		for _, interceptor := range h.interceptors() {
-			resp = interceptor(resp)
+			resp = interceptor(ctx, req, resp)
 		}
 
 		for k, v := range h.headers() {
