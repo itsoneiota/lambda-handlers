@@ -21,27 +21,27 @@ func (h *Handler) Run() func(http.ResponseWriter, *http.Request) {
 
 		resp := f(ctx, req)
 
-		handlerResponse(resp, w)
-
 		for _, interceptor := range h.interceptors() {
 			resp = interceptor(ctx, req, resp)
 		}
 
-		if resp.Headers == nil {
-			resp.Headers = http.Header{}
-		}
-
-		for k, v := range h.headers() {
-			resp.Headers.Add(k, v[0])
-		}
-
-		writeResponse(resp, w)
+		h.writeResponse(resp, w)
 
 		return
 	}
 }
 
-func writeResponse(resp *handler.Response, w http.ResponseWriter) {
+func (h *Handler) writeResponse(resp *handler.Response, w http.ResponseWriter) {
+	if resp.Headers == nil {
+		resp.Headers = http.Header{}
+	}
+
+	for key, values := range h.headers() {
+		for _, value := range values {
+			resp.Headers.Add(key, value)
+		}
+	}
+
 	for key, values := range resp.Headers {
 		for _, value := range values {
 			w.Header().Add(key, value)
@@ -54,17 +54,6 @@ func writeResponse(resp *handler.Response, w http.ResponseWriter) {
 
 		return
 	}
-}
-
-func handlerResponse(r *handler.Response, w http.ResponseWriter) {
-	for k, v := range r.Headers {
-		if len(v) > 0 {
-			w.Header().Add(k, v[0])
-		}
-	}
-
-	w.WriteHeader(r.StatusCode)
-	w.Write([]byte(r.Body))
 }
 
 func errorResponse(w http.ResponseWriter, srvErr *serviceerror.ServiceError) {
