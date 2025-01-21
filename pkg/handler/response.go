@@ -76,7 +76,13 @@ func NewErrorResponse(
 func isServiceError(err error) (bool, int) {
 	var code int
 
-	se, isSe := err.(*serviceerror.ServiceError)
+	type serviceError interface {
+		Code() string
+		Error() string
+		StatusCode() int
+	}
+
+	se, isSe := err.(serviceError)
 
 	if isSe {
 		code = se.StatusCode()
