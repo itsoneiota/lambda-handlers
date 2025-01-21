@@ -15,9 +15,8 @@ func (h *Handler) Run() func(http.ResponseWriter, *http.Request) {
 		req := NewRequest(r)
 
 		f := h.function
-		for _, middleware := range h.middlewares() {
-			middleware(f)(ctx, req)
-			f = middleware(f)
+		for i := len(h.middlewares()) - 1; i >= 0; i-- {
+			f = h.middlewares()[i](f)
 		}
 
 		resp := f(ctx, req)
