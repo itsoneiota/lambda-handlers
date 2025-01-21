@@ -27,6 +27,10 @@ func (h *Handler) Run() func(http.ResponseWriter, *http.Request) {
 			resp = interceptor(ctx, req, resp)
 		}
 
+		if resp.Headers == nil {
+			resp.Headers = http.Header{}
+		}
+
 		for k, v := range h.headers() {
 			resp.Headers.Add(k, v[0])
 		}
