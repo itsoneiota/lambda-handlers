@@ -28,7 +28,7 @@ func (c Request) PathByName(string) string {
 	return ""
 }
 
-func (c Request) QueryByName(string) string {
+func (c Request) QueryByName(...string) string {
 	return ""
 }
 

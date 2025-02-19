@@ -98,8 +98,17 @@ func (r *AWSRequest) PathByName(name string) string {
 }
 
 // QueryByName gets a query parameter by its name eg. "locale"
-func (r *AWSRequest) QueryByName(name string) string {
-	return r.queryParams.Get(name)
+func (r *AWSRequest) QueryByName(names ...string) string {
+	var result string
+	for _, name := range names {
+		if result != "" {
+			break
+		}
+
+		result = r.queryParams.Get(name)
+	}
+
+	return result
 }
 
 // QueryByName gets a query parameter by its name eg. "locale"

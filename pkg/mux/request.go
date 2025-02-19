@@ -47,10 +47,19 @@ func (r *Request) PathByName(name string) string {
 }
 
 // QueryByName gets a query parameter by its name eg. "locale"
-func (r *Request) QueryByName(name string) string {
+func (r *Request) QueryByName(names ...string) string {
+	var result string
 	v := r.request.URL.Query()
 
-	return v.Get(name)
+	for _, name := range names {
+		if result != "" {
+			break
+		}
+
+		result = v.Get(name)
+	}
+
+	return result
 }
 
 // QueryByName gets a query parameter by its name eg. "locale"

@@ -13,7 +13,7 @@ type Requester interface {
 	Headers() http.Header
 	MultipartReader() (*multipart.Reader, error)
 	PathByName(name string) string
-	QueryByName(name string) string
+	QueryByName(names ...string) string
 	QueryParams() url.Values
 	SetQueryByName(name, set string)
 }
