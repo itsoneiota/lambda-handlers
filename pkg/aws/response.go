@@ -34,8 +34,10 @@ func handle(h *Handler) LambdaCallback {
 
 		result := h.handler(ctx, req)
 
-		for _, i := range h.interceptors() {
-			result = i(ctx, req, result)
+		if is2XXRange(result.StatusCode) {
+			for _, i := range h.interceptors() {
+				result = i(ctx, req, result)
+			}
 		}
 
 		return NewEvent(result), nil
@@ -73,4 +75,8 @@ func unique(slice []string) []string {
 	}
 
 	return result
+}
+
+func is2XXRange(statusCode int) bool {
+	return statusCode >= http.StatusOK && statusCode < http.StatusMultipleChoices
 }

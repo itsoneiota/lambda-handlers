@@ -95,3 +95,34 @@ func TestHandle(t *testing.T) {
 	assert.JSONEq(t, `{"foo":"handler","bar":"interceptor 2"}`, resp.Body)
 
 }
+
+func TestError(t *testing.T) {
+	testHandler := func(ctx handler.Contexter, req handler.Requester) *handler.Response {
+		return &handler.Response{StatusCode: http.StatusBadRequest, Body: "Oh no!"}
+	}
+
+	h := &Handler{
+		handler: testHandler,
+		Opt: &Opt{
+			interceptors: []handler.Interceptor{
+				func(
+					_ handler.Contexter,
+					_ handler.Requester,
+					r *handler.Response,
+				) *handler.Response {
+					r.Body = "Oh yes!"
+
+					return r
+				},
+			},
+		},
+	}
+
+	req := &events.APIGatewayProxyRequest{}
+	resp, err := handle(h)(req)
+	assert.NoError(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Equal(t, "Oh no!", resp.Body)
+
+}
