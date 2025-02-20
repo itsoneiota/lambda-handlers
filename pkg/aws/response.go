@@ -35,7 +35,6 @@ func handle(h *Handler) LambdaCallback {
 		req := NewAWSRequest(r)
 
 		var result *handler.Response
-		var err error
 
 		func() {
 			defer func() {
@@ -50,7 +49,6 @@ func handle(h *Handler) LambdaCallback {
 						Headers:    h.handler.Headers,
 						Body:       `{"error": "Internal Server Error"}`,
 					}
-					err = nil
 				}
 			}()
 
@@ -65,7 +63,7 @@ func handle(h *Handler) LambdaCallback {
 			}
 		}
 
-		return NewEvent(result), err
+		return NewEvent(result), nil
 	}
 }
 
