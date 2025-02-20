@@ -34,8 +34,8 @@ type Interceptor func(Contexter, Requester, *Response) *Response
 
 // Genertic Handler object which is the reciever in every handler method
 type Handler struct {
-	function HandlerFunc
-	headers  http.Header
+	Function HandlerFunc
+	Headers  http.Header
 }
 
 func New(
@@ -48,8 +48,8 @@ func New(
 	}
 
 	return &Handler{
-		function: function,
-		headers:  opt.headers,
+		Function: function,
+		Headers:  opt.headers,
 	}
 }
 

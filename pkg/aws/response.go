@@ -1,7 +1,9 @@
 package aws
 
 import (
+	"log/slog"
 	"net/http"
+	"runtime/debug"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -12,7 +14,7 @@ import (
 type LambdaCallback = func(request *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error)
 
 func Start(
-	hf handler.HandlerFunc,
+	hf *handler.Handler,
 	opts ...Setter,
 ) {
 	h := &Handler{
@@ -32,7 +34,30 @@ func handle(h *Handler) LambdaCallback {
 		ctx := NewAWSContext(r.RequestContext)
 		req := NewAWSRequest(r)
 
-		result := h.handler(ctx, req)
+		var result *handler.Response
+		var err error
+
+		func() {
+			defer func() {
+				if rec := recover(); rec != nil {
+					slog.Error("Recovered from panic in handler",
+						slog.Any("error", rec),
+						slog.String("stacktrace", string(debug.Stack())),
+					)
+
+					result = &handler.Response{
+						StatusCode: http.StatusInternalServerError,
+						Headers:    h.handler.Headers,
+						Body:       `{"error": "Internal Server Error"}`,
+					}
+					err = nil
+				}
+			}()
+
+			if result == nil {
+				result = h.handler.Function(ctx, req)
+			}
+		}()
 
 		if is2XXRange(result.StatusCode) {
 			for _, i := range h.interceptors() {
@@ -40,7 +65,7 @@ func handle(h *Handler) LambdaCallback {
 			}
 		}
 
-		return NewEvent(result), nil
+		return NewEvent(result), err
 	}
 }
 

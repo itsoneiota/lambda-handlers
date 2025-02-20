@@ -45,7 +45,7 @@ func TestHandle(t *testing.T) {
 	}
 
 	h := &Handler{
-		handler: testHandler,
+		handler: handler.New(testHandler),
 		Opt: &Opt{
 			interceptors: []handler.Interceptor{
 				func(
@@ -102,7 +102,7 @@ func TestError(t *testing.T) {
 	}
 
 	h := &Handler{
-		handler: testHandler,
+		handler: handler.New(testHandler),
 		Opt: &Opt{
 			interceptors: []handler.Interceptor{
 				func(
@@ -124,5 +124,23 @@ func TestError(t *testing.T) {
 
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	assert.Equal(t, "Oh no!", resp.Body)
+}
+
+func TestPanic(t *testing.T) {
+	testHandler := func(ctx handler.Contexter, req handler.Requester) *handler.Response {
+		panic("test")
+	}
+
+	h := &Handler{
+		handler: handler.New(testHandler),
+		Opt:     &Opt{},
+	}
+
+	req := &events.APIGatewayProxyRequest{}
+	resp, err := handle(h)(req)
+	assert.NoError(t, err)
+
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	assert.JSONEq(t, `{"error": "Internal Server Error"}`, resp.Body)
 
 }
