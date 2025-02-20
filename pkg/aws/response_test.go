@@ -141,6 +141,6 @@ func TestPanic(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
-	assert.JSONEq(t, `{"error": "Internal Server Error"}`, resp.Body)
+	assert.JSONEq(t, `{"error": {"code":"INTERNAL_SERVER_ERROR", "id":"INTERNAL_SERVER_ERROR", "message":"Internal Server Error"}}`, resp.Body)
 
 }

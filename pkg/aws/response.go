@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"encoding/json"
 	"log/slog"
 	"net/http"
 	"runtime/debug"
@@ -9,6 +10,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/itsoneiota/lambda-handlers/pkg/handler"
+	"github.com/itsoneiota/lambda-handlers/pkg/serviceerror"
 )
 
 type LambdaCallback = func(request *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error)
@@ -41,13 +43,16 @@ func handle(h *Handler) LambdaCallback {
 				if rec := recover(); rec != nil {
 					slog.Error("Recovered from panic in handler",
 						slog.Any("error", rec),
-						slog.String("stacktrace", string(debug.Stack())),
+						slog.String("stacktrace", formatStackTrace(debug.Stack())),
 					)
+
+					e := serviceerror.InternalServerError("Internal Server Error")
+					b, _ := json.Marshal(e)
 
 					result = &handler.Response{
 						StatusCode: http.StatusInternalServerError,
 						Headers:    h.handler.Headers,
-						Body:       `{"error": "Internal Server Error"}`,
+						Body:       string(b),
 					}
 				}
 			}()
@@ -114,4 +119,12 @@ func unique(slice []string) []string {
 
 func is2XXRange(statusCode int) bool {
 	return statusCode >= http.StatusOK && statusCode < http.StatusMultipleChoices
+}
+
+func formatStackTrace(stack []byte) string {
+	lines := strings.Split(string(stack), "\n")
+	for i, line := range lines {
+		lines[i] = "    " + line // Indent for better readability
+	}
+	return "\n" + strings.Join(lines, "\n")
 }
