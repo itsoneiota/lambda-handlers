@@ -54,6 +54,18 @@ func handle(h *Handler) LambdaCallback {
 
 			if result == nil {
 				result = h.handler.Function(ctx, req)
+				headers := http.Header{}
+				if result.Headers != nil {
+					headers = result.Headers
+				}
+
+				for k, v := range h.handler.Headers {
+					for _, val := range v {
+						headers.Add(k, val)
+					}
+				}
+
+				result.Headers = headers
 			}
 		}()
 
