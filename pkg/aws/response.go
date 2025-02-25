@@ -43,7 +43,7 @@ func handle(h *Handler) LambdaCallback {
 				if rec := recover(); rec != nil {
 					slog.Error("Recovered from panic in handler",
 						slog.Any("error", rec),
-						slog.String("stacktrace", formatStackTrace(debug.Stack())),
+						slog.Any("stacktrace", formatStackTrace(debug.Stack())),
 					)
 
 					e := serviceerror.InternalServerError("Internal Server Error")
@@ -121,10 +121,14 @@ func is2XXRange(statusCode int) bool {
 	return statusCode >= http.StatusOK && statusCode < http.StatusMultipleChoices
 }
 
-func formatStackTrace(stack []byte) string {
+func formatStackTrace(stack []byte) []string {
 	lines := strings.Split(string(stack), "\n")
-	for i, line := range lines {
-		lines[i] = "    " + line // Indent for better readability
+	var result []string
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed != "" {
+			result = append(result, trimmed)
+		}
 	}
-	return "\n" + strings.Join(lines, "\n")
+	return result
 }
