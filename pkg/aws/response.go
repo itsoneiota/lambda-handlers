@@ -43,7 +43,7 @@ func handle(h *Handler) LambdaCallback {
 				if rec := recover(); rec != nil {
 					slog.Error("Handler error",
 						slog.Any("error", rec),
-						slog.Group("stacktrace", "lines", stackTrace(debug.Stack())),
+						slog.Group("stacktrace", slog.Any("lines", stackTrace(debug.Stack()))),
 					)
 
 					e := serviceerror.InternalServerError("Internal Server Error")
