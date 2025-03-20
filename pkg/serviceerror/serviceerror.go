@@ -185,6 +185,11 @@ func MovedPermanently(message string) *ServiceError {
 	return NewServiceError(CodeMovedPermanently, CodeMovedPermanently, message)
 }
 
+// Unknown is a helper method for creating a service error with an 'Unknown' code
+func Unknown(message string) *ServiceError {
+	return NewServiceError(CodeUnknown, CodeUnknown, message)
+}
+
 // GetDefaultErrorMessage get the default error message
 func GetDefaultErrorMessage(statusCode int) (string, int) {
 	var message string
