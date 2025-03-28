@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/gorilla/mux"
 	"github.com/itsoneiota/lambda-handlers/v2/pkg/fakers"
+	"github.com/itsoneiota/lambda-handlers/v2/pkg/handler"
 	"github.com/itsoneiota/lambda-handlers/v2/pkg/serviceerror"
 	"github.com/stretchr/testify/suite"
 )
@@ -84,16 +85,19 @@ func (s *HandlerSuite) TestHandle() {
 }
 
 func (s *HandlerSuite) TestHeaders() {
+	b := &handler.BaseOpt{}
+	b.SetHeaders(http.Header{
+		"foo": {
+			"bar",
+		},
+	})
+
 	resp, err := handle(&Handler{
 		function: func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("bar", "baz")
 		},
 		Opt: &Opt{
-			headers: http.Header{
-				"foo": {
-					"bar",
-				},
-			},
+			BaseOpt: b,
 		},
 	})(s.req)
 	s.NoError(err)
@@ -104,27 +108,28 @@ func (s *HandlerSuite) TestHeaders() {
 }
 
 func (s *HandlerSuite) TestMiddlewares() {
+	b := &handler.BaseOpt{}
+	b.SetMiddlewares([]handler.Middleware{
+		func(r *http.Request) (*http.Request, error) {
+			query, err := url.ParseQuery(r.URL.RawQuery)
+			s.NoError(err)
+
+			query.Set("bar", "3")
+
+			r.URL.RawQuery = query.Encode()
+
+			return r, nil
+		},
+		func(r *http.Request) (*http.Request, error) {
+			ctx := context.WithValue(r.Context(), "baz", "4")
+
+			return r.WithContext(ctx), nil
+		},
+	})
+
 	resp, err := handle(&Handler{
 		function: s.handler,
-		Opt: &Opt{
-			middlewares: []Middleware{
-				func(r *http.Request) (*http.Request, error) {
-					query, err := url.ParseQuery(r.URL.RawQuery)
-					s.NoError(err)
-
-					query.Set("bar", "3")
-
-					r.URL.RawQuery = query.Encode()
-
-					return r, nil
-				},
-				func(r *http.Request) (*http.Request, error) {
-					ctx := context.WithValue(r.Context(), "baz", "4")
-
-					return r.WithContext(ctx), nil
-				},
-			},
-		},
+		Opt:      &Opt{BaseOpt: b},
 	})(s.req)
 	s.NoError(err)
 
@@ -133,15 +138,16 @@ func (s *HandlerSuite) TestMiddlewares() {
 }
 
 func (s *HandlerSuite) TestMiddlewareError() {
+	b := &handler.BaseOpt{}
+	b.SetMiddlewares([]handler.Middleware{
+		func(r *http.Request) (*http.Request, error) {
+			return r, serviceerror.BadRequest("something bad has happened")
+		},
+	})
+
 	resp, err := handle(&Handler{
 		function: s.handler,
-		Opt: &Opt{
-			middlewares: []Middleware{
-				func(r *http.Request) (*http.Request, error) {
-					return r, serviceerror.BadRequest("something bad has happened")
-				},
-			},
-		},
+		Opt:      &Opt{BaseOpt: b},
 	})(s.req)
 	s.NoError(err)
 
@@ -154,7 +160,7 @@ func (s *HandlerSuite) TestInterceptors() {
 		function: s.handler,
 		Opt: &Opt{
 			interceptors: []Interceptor{
-				func(w *ResponseWriter) error {
+				 {
 					m := &metasyntactic{}
 					err := json.Unmarshal([]byte(w.Body), m)
 					s.NoError(err)

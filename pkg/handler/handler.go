@@ -33,3 +33,4 @@ type Contexter interface {
 }
 
 type HandlerFunc = func(res http.ResponseWriter, req Requester) error
+type Middleware func(*http.Request) (*http.Request, error)

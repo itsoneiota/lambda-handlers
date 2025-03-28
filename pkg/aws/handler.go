@@ -10,11 +10,11 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/gorilla/mux"
 	"github.com/itsoneiota/lambda-handlers/v2/pkg/serviceerror"
+	"github.com/itsoneiota/lambda-handlers/v2/pkg/helpers"
 )
 
 type LambdaCallback = func(request *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error)
 
-type Middleware func(*http.Request) (*http.Request, error)
 type Interceptor func(*ResponseWriter) error
 
 type Handler struct {
@@ -64,7 +64,7 @@ func handle(h *Handler) LambdaCallback {
 
 		h.function(resp, req)
 
-		if !isOkRange(resp.StatusCode) {
+		if !helpers.IsOkRange(resp.StatusCode) {
 			return NewEvent(resp)
 		}
 
@@ -116,10 +116,6 @@ func unique(slice []string) []string {
 	}
 
 	return result
-}
-
-func isOkRange(statusCode int) bool {
-	return statusCode >= http.StatusOK && statusCode < http.StatusMultipleChoices
 }
 
 func errorResponse(w *ResponseWriter, srvErr *serviceerror.ServiceError) (*events.APIGatewayProxyResponse, error) {

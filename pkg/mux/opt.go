@@ -1,4 +1,4 @@
-package aws
+package mux
 
 import (
 	"net/http"
@@ -6,12 +6,12 @@ import (
 	"github.com/itsoneiota/lambda-handlers/v2/pkg/handler"
 )
 
-type AwsOpt interface {
+type MuxOpt interface {
 	handler.Opt
 	SetInterceptors([]Interceptor)
 }
 
-type Setter func(AwsOpt)
+type Setter func(MuxOpt)
 
 type Opt struct {
 	*handler.BaseOpt
@@ -57,8 +57,20 @@ func (h *Handler) interceptors() []Interceptor {
 	return result
 }
 
+func WithHeaders(h http.Header) Setter {
+	return func(o MuxOpt) {
+		o.SetHeaders(h)
+	}
+}
+
+func WithMiddlewares(m ...handler.Middleware) Setter {
+	return func(o MuxOpt) {
+		o.SetMiddlewares(m)
+	}
+}
+
 func WithInterceptors(i ...Interceptor) Setter {
-	return func(o AwsOpt) {
+	return func(o MuxOpt) {
 		o.SetInterceptors(i)
 	}
 }
