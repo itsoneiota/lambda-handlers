@@ -57,6 +57,18 @@ func (h *Handler) interceptors() []Interceptor {
 	return result
 }
 
+func WithHeaders(h http.Header) Setter {
+	return func(o AwsOpt) {
+		o.SetHeaders(h)
+	}
+}
+
+func WithMiddlewares(m ...handler.Middleware) Setter {
+	return func(o AwsOpt) {
+		o.SetMiddlewares(m)
+	}
+}
+
 func WithInterceptors(i ...Interceptor) Setter {
 	return func(o AwsOpt) {
 		o.SetInterceptors(i)

@@ -160,7 +160,7 @@ func (s *HandlerSuite) TestInterceptors() {
 		function: s.handler,
 		Opt: &Opt{
 			interceptors: []Interceptor{
-				 {
+				func(w *ResponseWriter) error {
 					m := &metasyntactic{}
 					err := json.Unmarshal([]byte(w.Body), m)
 					s.NoError(err)
