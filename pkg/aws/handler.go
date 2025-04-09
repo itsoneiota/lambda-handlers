@@ -9,8 +9,9 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/gorilla/mux"
-	"github.com/itsoneiota/lambda-handlers/v2/pkg/serviceerror"
+	"github.com/itsoneiota/lambda-handlers/v2/pkg/handler"
 	"github.com/itsoneiota/lambda-handlers/v2/pkg/helpers"
+	"github.com/itsoneiota/lambda-handlers/v2/pkg/serviceerror"
 )
 
 type LambdaCallback = func(request *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error)
@@ -28,7 +29,7 @@ func Start(
 ) {
 	h := &Handler{
 		function: hf,
-		Opt:      &Opt{},
+		Opt:      &Opt{BaseOpt: &handler.BaseOpt{}},
 	}
 
 	for _, o := range opts {

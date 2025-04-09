@@ -33,7 +33,7 @@ func main() {
 	).Times(1)
 
 	r := muxRouter.NewRouter()
-	r.HandleFunc("/test", mux.CreateHandler(example.FindHandler(c)))
+	r.HandleFunc("/test", mux.New(example.FindHandler(c)).Run())
 
 	log.Fatal(http.ListenAndServe("localhost:8080", r))
 }
