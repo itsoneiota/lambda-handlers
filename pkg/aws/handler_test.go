@@ -183,6 +183,26 @@ func (s *HandlerSuite) TestInterceptors() {
 	s.JSONEq(`{"foo":"1","bar":"4","baz":""}`, resp.Body)
 }
 
+func (s *HandlerSuite) TestInterceptorsHeaders() {
+	b := &handler.BaseOpt{}
+	b.SetInterceptors([]handler.Interceptor{
+		func(w handler.ResponseWriter) error {
+			w.Header().Add("foo", "bar")
+
+			return nil
+		},
+	})
+
+	resp, err := handle(&Handler{
+		function: s.handler,
+		BaseOpt:  b,
+	})(s.req)
+	s.NoError(err)
+
+	s.Equal(http.StatusOK, resp.StatusCode)
+	s.Equal("bar", resp.Headers["Foo"])
+}
+
 func (s *HandlerSuite) TestInterceptorError() {
 	b := &handler.BaseOpt{}
 	b.SetInterceptors([]handler.Interceptor{

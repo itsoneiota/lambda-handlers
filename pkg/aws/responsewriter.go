@@ -16,6 +16,10 @@ type ResponseWriter struct {
 }
 
 func NewResponseWriter(headers http.Header) *ResponseWriter {
+	if headers == nil {
+		headers = http.Header{}
+	}
+
 	return &ResponseWriter{
 		APIGatewayProxyResponse: &events.APIGatewayProxyResponse{},
 		headers:                 headers,
