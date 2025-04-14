@@ -78,16 +78,9 @@ func handle(h *Handler) LambdaCallback {
 }
 
 func NewEvent(w *ResponseWriter) (*events.APIGatewayProxyResponse, error) {
-	headers := map[string]string{}
-	for k, v := range w.Header() {
-		if len(v) > 0 {
-			headers[k] = v[0]
-		}
-	}
-
 	return &events.APIGatewayProxyResponse{
 		StatusCode: w.StatusCode(),
-		Headers:    headers,
+		Headers:    encodeHeaders(w.Header()),
 		Body:       w.Body(),
 	}, nil
 }

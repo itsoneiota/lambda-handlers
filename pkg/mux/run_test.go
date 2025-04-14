@@ -138,6 +138,37 @@ func (s *RunSuite) TestInterceptors() {
 	s.Equal(`{"foo":"foo","bar":"4","baz":""}`, string(resp.body))
 }
 
+func (s *RunSuite) TestInterceptorsHeaders() {
+	testHandler := func(w http.ResponseWriter, r *http.Request) {
+		m := &metasyntactic{
+			Foo: "foo",
+		}
+
+		b, err := json.Marshal(m)
+		s.NoError(err)
+
+		w.Write(b)
+		w.WriteHeader(http.StatusOK)
+	}
+
+	resp := &fakeResponseWriter{
+		headers: http.Header{},
+	}
+	req := &http.Request{
+		Method: http.MethodGet,
+		URL:    &url.URL{},
+	}
+	New(testHandler, handler.WithInterceptors(
+		func(w handler.ResponseWriter) error {
+			w.Header().Add("foo", "bar")
+
+			return nil
+		},
+	)).Run()(resp, req)
+
+	s.Equal(http.StatusOK, resp.statusCode)
+}
+
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestRunSuite(t *testing.T) {
