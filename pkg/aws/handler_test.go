@@ -77,6 +77,7 @@ func (s *HandlerSuite) SetupTest() {
 func (s *HandlerSuite) TestHandle() {
 	resp, err := handle(&Handler{
 		function: s.handler,
+		BaseOpt:  &handler.BaseOpt{},
 	})(s.req)
 	s.NoError(err)
 
@@ -96,9 +97,7 @@ func (s *HandlerSuite) TestHeaders() {
 		function: func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("bar", "baz")
 		},
-		Opt: &Opt{
-			BaseOpt: b,
-		},
+		BaseOpt: b,
 	})(s.req)
 	s.NoError(err)
 
@@ -129,7 +128,7 @@ func (s *HandlerSuite) TestMiddlewares() {
 
 	resp, err := handle(&Handler{
 		function: s.handler,
-		Opt:      &Opt{BaseOpt: b},
+		BaseOpt:  b,
 	})(s.req)
 	s.NoError(err)
 
@@ -147,7 +146,7 @@ func (s *HandlerSuite) TestMiddlewareError() {
 
 	resp, err := handle(&Handler{
 		function: s.handler,
-		Opt:      &Opt{BaseOpt: b},
+		BaseOpt:  b,
 	})(s.req)
 	s.NoError(err)
 
@@ -156,26 +155,27 @@ func (s *HandlerSuite) TestMiddlewareError() {
 }
 
 func (s *HandlerSuite) TestInterceptors() {
+	b := &handler.BaseOpt{}
+	b.SetInterceptors([]handler.Interceptor{
+		func(w handler.ResponseWriter) error {
+			m := &metasyntactic{}
+			err := json.Unmarshal([]byte(w.Body()), m)
+			s.NoError(err)
+
+			m.Bar = "4"
+
+			b, err := json.Marshal(m)
+			s.NoError(err)
+
+			w.Write(b)
+
+			return nil
+		},
+	})
+
 	resp, err := handle(&Handler{
 		function: s.handler,
-		Opt: &Opt{
-			interceptors: []Interceptor{
-				func(w *ResponseWriter) error {
-					m := &metasyntactic{}
-					err := json.Unmarshal([]byte(w.Body), m)
-					s.NoError(err)
-
-					m.Bar = "4"
-
-					b, err := json.Marshal(m)
-					s.NoError(err)
-
-					w.Write(b)
-
-					return nil
-				},
-			},
-		},
+		BaseOpt:  b,
 	})(s.req)
 	s.NoError(err)
 
@@ -184,15 +184,16 @@ func (s *HandlerSuite) TestInterceptors() {
 }
 
 func (s *HandlerSuite) TestInterceptorError() {
+	b := &handler.BaseOpt{}
+	b.SetInterceptors([]handler.Interceptor{
+		func(_ handler.ResponseWriter) error {
+			return serviceerror.BadRequest("something bad has happened")
+		},
+	})
+
 	resp, err := handle(&Handler{
 		function: s.handler,
-		Opt: &Opt{
-			interceptors: []Interceptor{
-				func(w *ResponseWriter) error {
-					return serviceerror.BadRequest("something bad has happened")
-				},
-			},
-		},
+		BaseOpt:  b,
 	})(s.req)
 	s.NoError(err)
 

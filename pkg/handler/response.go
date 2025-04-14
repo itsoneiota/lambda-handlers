@@ -6,6 +6,15 @@ import (
 	"net/http"
 )
 
+type ResponseWriter interface {
+	http.ResponseWriter
+	StatusCode() int
+	Body() string
+}
+
+type Middleware func(*http.Request) (*http.Request, error)
+type Interceptor func(ResponseWriter) error
+
 // Genertic Handler object which is the reciever in every handler method
 type ResponseHandler struct {
 	res http.ResponseWriter

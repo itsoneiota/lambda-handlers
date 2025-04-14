@@ -28,15 +28,15 @@ func (w *ResponseWriter) Header() http.Header {
 
 func (w *ResponseWriter) Write(body []byte) (int, error) {
 	bodyStr := string(body)
-	if !helpers.IsOkRange(w.StatusCode) && !helpers.IsValidJSONObject(bodyStr) {
+	if !helpers.IsOkRange(w.StatusCode()) && !helpers.IsValidJSONObject(bodyStr) {
 		var decodedString string
 		if err := json.Unmarshal([]byte(bodyStr), &decodedString); err == nil {
 			bodyStr = decodedString
 		}
 
 		e := serviceerror.NewServiceError(
-			serviceerror.GetServiceErrorCode(w.StatusCode),
-			serviceerror.GetServiceErrorCode(w.StatusCode),
+			serviceerror.GetServiceErrorCode(w.StatusCode()),
+			serviceerror.GetServiceErrorCode(w.StatusCode()),
 			bodyStr,
 		)
 
@@ -49,11 +49,19 @@ func (w *ResponseWriter) Write(body []byte) (int, error) {
 		bodyStr = string(b)
 	}
 
-	w.Body = bodyStr
+	w.APIGatewayProxyResponse.Body = bodyStr
 
 	return len(body), nil
 }
 
 func (w *ResponseWriter) WriteHeader(statusCode int) {
-	w.StatusCode = statusCode
+	w.APIGatewayProxyResponse.StatusCode = statusCode
+}
+
+func (w *ResponseWriter) Body() string {
+	return w.APIGatewayProxyResponse.Body
+}
+
+func (w *ResponseWriter) StatusCode() int {
+	return w.APIGatewayProxyResponse.StatusCode
 }

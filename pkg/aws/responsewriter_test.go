@@ -27,10 +27,10 @@ func (s *ResponseWriterSuite) TestNewResponseWriter() {
 	s.NotEmpty(r.Header())
 
 	r.WriteHeader(http.StatusOK)
-	s.Equal(http.StatusOK, r.StatusCode)
+	s.Equal(http.StatusOK, r.StatusCode())
 
 	r.Write([]byte("foo"))
-	s.Equal("foo", r.Body)
+	s.Equal("foo", r.Body())
 }
 
 func (s *ResponseWriterSuite) TestErrorResponse() {
@@ -40,10 +40,10 @@ func (s *ResponseWriterSuite) TestErrorResponse() {
 	s.NotEmpty(r.Header())
 
 	r.WriteHeader(http.StatusBadRequest)
-	s.Equal(http.StatusBadRequest, r.StatusCode)
+	s.Equal(http.StatusBadRequest, r.StatusCode())
 
 	r.Write([]byte("Oops"))
-	s.Equal(`{"error":{"id":"BAD_REQUEST","code":"BAD_REQUEST","message":"Oops"}}`, r.Body)
+	s.Equal(`{"error":{"id":"BAD_REQUEST","code":"BAD_REQUEST","message":"Oops"}}`, r.Body())
 }
 
 func (s *ResponseWriterSuite) TestWrapperString() {
@@ -53,10 +53,10 @@ func (s *ResponseWriterSuite) TestWrapperString() {
 	s.NotEmpty(r.Header())
 
 	r.WriteHeader(http.StatusBadRequest)
-	s.Equal(http.StatusBadRequest, r.StatusCode)
+	s.Equal(http.StatusBadRequest, r.StatusCode())
 
 	r.Write([]byte("\"Oops\"\n"))
-	s.Equal(`{"error":{"id":"BAD_REQUEST","code":"BAD_REQUEST","message":"Oops"}}`, r.Body)
+	s.Equal(`{"error":{"id":"BAD_REQUEST","code":"BAD_REQUEST","message":"Oops"}}`, r.Body())
 }
 
 func (s *ResponseWriterSuite) TestAddHeader() {

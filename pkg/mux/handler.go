@@ -6,24 +6,22 @@ import (
 	"github.com/itsoneiota/lambda-handlers/v2/pkg/handler"
 )
 
-type Interceptor func(*ResponseWriter) error
-
 type Handler struct {
 	function http.HandlerFunc
-	*Opt
+	*handler.BaseOpt
 }
 
 func New(
 	hf http.HandlerFunc,
-	opts ...Setter,
+	opts ...handler.Setter,
 ) *Handler {
 	result := &Handler{
 		function: hf,
-		Opt:      &Opt{BaseOpt: &handler.BaseOpt{}},
+		BaseOpt:  &handler.BaseOpt{},
 	}
 
 	for _, o := range opts {
-		o(result.Opt)
+		o(result.BaseOpt)
 	}
 
 	return result

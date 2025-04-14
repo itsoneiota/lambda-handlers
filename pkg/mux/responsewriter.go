@@ -11,8 +11,8 @@ import (
 
 type ResponseWriter struct {
 	http.ResponseWriter
-	StatusCode int
-	Body       string
+	statusCode int
+	body       string
 }
 
 func NewResponseWriter(w http.ResponseWriter, headers http.Header) *ResponseWriter {
@@ -33,15 +33,15 @@ func (w *ResponseWriter) Header() http.Header {
 
 func (w *ResponseWriter) Write(body []byte) (int, error) {
 	bodyStr := string(body)
-	if !helpers.IsOkRange(w.StatusCode) && !helpers.IsValidJSONObject(bodyStr) {
+	if !helpers.IsOkRange(w.statusCode) && !helpers.IsValidJSONObject(bodyStr) {
 		var decodedString string
 		if err := json.Unmarshal([]byte(bodyStr), &decodedString); err == nil {
 			bodyStr = decodedString
 		}
 
 		e := serviceerror.NewServiceError(
-			serviceerror.GetServiceErrorCode(w.StatusCode),
-			serviceerror.GetServiceErrorCode(w.StatusCode),
+			serviceerror.GetServiceErrorCode(w.statusCode),
+			serviceerror.GetServiceErrorCode(w.statusCode),
 			bodyStr,
 		)
 
@@ -54,7 +54,7 @@ func (w *ResponseWriter) Write(body []byte) (int, error) {
 		bodyStr = string(b)
 	}
 
-	w.Body = bodyStr
+	w.body = bodyStr
 	w.ResponseWriter.Write([]byte(bodyStr))
 
 	return len(body), nil
@@ -62,5 +62,13 @@ func (w *ResponseWriter) Write(body []byte) (int, error) {
 
 func (w *ResponseWriter) WriteHeader(statusCode int) {
 	w.ResponseWriter.WriteHeader(statusCode)
-	w.StatusCode = statusCode
+	w.statusCode = statusCode
+}
+
+func (w *ResponseWriter) Body() string {
+	return w.body
+}
+
+func (w *ResponseWriter) StatusCode() int {
+	return w.statusCode
 }

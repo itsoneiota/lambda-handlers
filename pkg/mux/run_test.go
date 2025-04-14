@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/itsoneiota/lambda-handlers/v2/pkg/handler"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -39,7 +40,7 @@ func (s *RunSuite) TestRun() {
 		headers: http.Header{},
 	}
 	req := &http.Request{}
-	New(testHandler, WithHeaders(http.Header{
+	New(testHandler, handler.WithHeaders(http.Header{
 		"default": {"header"},
 	})).Run()(resp, req)
 
@@ -74,7 +75,7 @@ func (s *RunSuite) TestMiddlewares() {
 		Method: http.MethodGet,
 		URL:    &url.URL{},
 	}
-	New(testHandler, WithMiddlewares(
+	New(testHandler, handler.WithMiddlewares(
 		func(r *http.Request) (*http.Request, error) {
 			ctx := context.WithValue(r.Context(), "foo", 1)
 
@@ -116,10 +117,10 @@ func (s *RunSuite) TestInterceptors() {
 		Method: http.MethodGet,
 		URL:    &url.URL{},
 	}
-	New(testHandler, WithInterceptors(
-		func(w *ResponseWriter) error {
+	New(testHandler, handler.WithInterceptors(
+		func(w handler.ResponseWriter) error {
 			m := &metasyntactic{}
-			err := json.Unmarshal([]byte(w.Body), m)
+			err := json.Unmarshal([]byte(w.Body()), m)
 			s.NoError(err)
 
 			m.Bar = "4"

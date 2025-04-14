@@ -16,24 +16,22 @@ import (
 
 type LambdaCallback = func(request *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error)
 
-type Interceptor func(*ResponseWriter) error
-
 type Handler struct {
 	function http.HandlerFunc
-	*Opt
+	*handler.BaseOpt
 }
 
 func Start(
 	hf http.HandlerFunc,
-	opts ...Setter,
+	opts ...handler.Setter,
 ) {
 	h := &Handler{
 		function: hf,
-		Opt:      &Opt{BaseOpt: &handler.BaseOpt{}},
+		BaseOpt:  &handler.BaseOpt{},
 	}
 
 	for _, o := range opts {
-		o(h.Opt)
+		o(h.BaseOpt)
 	}
 
 	lambda.Start(
@@ -43,7 +41,7 @@ func Start(
 
 func handle(h *Handler) LambdaCallback {
 	return func(r *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-		resp := NewResponseWriter(h.headers())
+		resp := NewResponseWriter(h.Headers())
 		req, err := NewHttpRequest(r)
 		if err != nil {
 			return nil, err
@@ -55,7 +53,7 @@ func handle(h *Handler) LambdaCallback {
 		}
 		req = mux.SetURLVars(req, vars)
 
-		for _, middleware := range h.middlewares() {
+		for _, middleware := range h.Middlewares() {
 			var err error
 			req, err = middleware(req)
 			if err != nil {
@@ -65,11 +63,11 @@ func handle(h *Handler) LambdaCallback {
 
 		h.function(resp, req)
 
-		if !helpers.IsOkRange(resp.StatusCode) {
+		if !helpers.IsOkRange(resp.StatusCode()) {
 			return NewEvent(resp)
 		}
 
-		for _, interceptor := range h.interceptors() {
+		for _, interceptor := range h.Interceptors() {
 			if err := interceptor(resp); err != nil {
 				return errorResponse(resp, serviceerror.NewFromErr(err, ""))
 			}
@@ -88,9 +86,9 @@ func NewEvent(w *ResponseWriter) (*events.APIGatewayProxyResponse, error) {
 	}
 
 	return &events.APIGatewayProxyResponse{
-		StatusCode: w.StatusCode,
+		StatusCode: w.StatusCode(),
 		Headers:    headers,
-		Body:       w.Body,
+		Body:       w.Body(),
 	}, nil
 }
 
