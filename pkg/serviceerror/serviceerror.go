@@ -21,6 +21,7 @@ const (
 	CodeBadRequest          = "BAD_REQUEST"
 	CodeFound               = "FOUND"
 	CodeMovedPermanently    = "MOVED_PERMANENTLY"
+	CodeBadGateway          = "BAD_GATEWAY"
 )
 
 // StatusCodes mapped to the error codes
@@ -36,6 +37,7 @@ var StatusCodes = map[string]int{
 	CodeBadRequest:          http.StatusBadRequest,
 	CodeFound:               http.StatusFound,
 	CodeMovedPermanently:    http.StatusMovedPermanently,
+	CodeBadGateway:          http.StatusBadGateway,
 }
 
 // defaultErrorMessages are default error messages if we are unable to get a message from the client error.
@@ -183,6 +185,16 @@ func Found(message string) *ServiceError {
 // MovedPermanently is a helper method for creating a service error with an 'MovedPermanently' code
 func MovedPermanently(message string) *ServiceError {
 	return NewServiceError(CodeMovedPermanently, CodeMovedPermanently, message)
+}
+
+// BadGateway is a helper method for creating a service error with an 'BadGateway' code
+func BadGateway(message string) *ServiceError {
+	return NewServiceError(CodeBadGateway, CodeBadGateway, message)
+}
+
+// Unknown is a helper method for creating a service error with an 'Unknown' code
+func Unknown(message string) *ServiceError {
+	return NewServiceError(CodeUnknown, CodeUnknown, message)
 }
 
 // GetDefaultErrorMessage get the default error message
