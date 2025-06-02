@@ -20,6 +20,8 @@ var (
 )
 
 type AWSRequest struct {
+	path            string
+	method          string
 	body            string
 	pathParams      map[string]string
 	queryParams     url.Values
@@ -39,12 +41,24 @@ func NewAWSRequest(r *events.APIGatewayProxyRequest) *AWSRequest {
 	}
 
 	return &AWSRequest{
+		path:            r.Path,
+		method:          r.HTTPMethod,
 		body:            r.Body,
 		pathParams:      r.PathParameters,
 		queryParams:     values,
 		headers:         headers,
 		isBase64Encoded: r.IsBase64Encoded,
 	}
+}
+
+// Request path
+func (r *AWSRequest) Path() string {
+	return r.path
+}
+
+// Request method
+func (r *AWSRequest) Method() string {
+	return r.method
 }
 
 // Body gets request payload

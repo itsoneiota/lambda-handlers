@@ -8,6 +8,14 @@ import (
 
 type Request struct{}
 
+func (c Request) Path() string {
+	return ""
+}
+
+func (c Request) Method() string {
+	return ""
+}
+
 func (c Request) Body() string {
 	return ""
 }

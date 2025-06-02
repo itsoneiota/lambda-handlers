@@ -8,6 +8,8 @@ import (
 
 // Generic Request object which is used in every handler
 type Requester interface {
+	Path() string
+	Method() string
 	Body() string
 	GetAuthToken() string
 	Headers() http.Header

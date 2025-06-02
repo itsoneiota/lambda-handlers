@@ -21,6 +21,16 @@ func NewRequest(r *http.Request) *Request {
 	}
 }
 
+// Request path
+func (r *Request) Path() string {
+	return r.request.URL.Path
+}
+
+// Request method
+func (r *Request) Method() string {
+	return r.request.Method
+}
+
 // Body gets request payload
 func (r *Request) Body() string {
 	buf := new(bytes.Buffer)
