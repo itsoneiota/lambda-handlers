@@ -2,6 +2,7 @@ package aws
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -89,7 +90,10 @@ func encodeHeaders(h http.Header) map[string]string {
 	result := map[string]string{}
 
 	for hKey := range h {
-		valsUnique := unique(h.Values(hKey))
+		fmt.Println(hKey)
+		foo := h.Values(hKey)
+		valsUnique := unique(foo)
+
 		result[hKey] = strings.Join(valsUnique, "; ")
 	}
 

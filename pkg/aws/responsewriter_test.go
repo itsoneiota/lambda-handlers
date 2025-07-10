@@ -52,6 +52,19 @@ func (s *ResponseWriterSuite) TestWrapperString() {
 	s.IsType(&ResponseWriter{}, r)
 	s.NotEmpty(r.Header())
 
+	r.WriteHeader(http.StatusOK)
+	s.Equal(http.StatusOK, r.StatusCode())
+
+	r.Write([]byte("\"{\\\"foo\\\": \\\"bar\\\"}\""))
+	s.Equal(`{"foo": "bar"}`, r.Body())
+}
+
+func (s *ResponseWriterSuite) TestErrorWrapperString() {
+	r := NewResponseWriter(s.headers)
+
+	s.IsType(&ResponseWriter{}, r)
+	s.NotEmpty(r.Header())
+
 	r.WriteHeader(http.StatusBadRequest)
 	s.Equal(http.StatusBadRequest, r.StatusCode())
 

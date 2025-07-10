@@ -51,6 +51,12 @@ func (w *ResponseWriter) Write(body []byte) (int, error) {
 		}
 
 		bodyStr = string(b)
+	} else if !helpers.IsValidJSONObject(bodyStr) {
+		var decodedString string
+		err := json.Unmarshal([]byte(bodyStr), &decodedString)
+		if err == nil {
+			bodyStr = decodedString
+		}
 	}
 
 	w.APIGatewayProxyResponse.Body = bodyStr

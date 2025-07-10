@@ -88,13 +88,14 @@ func (s *HandlerSuite) TestHandle() {
 func (s *HandlerSuite) TestHeaders() {
 	b := &handler.BaseOpt{}
 	b.SetHeaders(http.Header{
-		"foo": {
+		"Foo": {
 			"bar",
 		},
 	})
 
 	resp, err := handle(&Handler{
 		function: func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
 			w.Header().Set("bar", "baz")
 		},
 		BaseOpt: b,
@@ -102,7 +103,7 @@ func (s *HandlerSuite) TestHeaders() {
 	s.NoError(err)
 
 	s.NotEmpty(resp.Headers)
-	s.Equal("bar", resp.Headers["foo"])
+	s.Equal("bar", resp.Headers["Foo"])
 	s.Equal("baz", resp.Headers["Bar"])
 }
 
