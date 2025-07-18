@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/base64"
 	"errors"
@@ -95,15 +96,19 @@ func (r *AWSRequest) MultipartReader() (*multipart.Reader, error) {
 		return nil, ErrContentTypeHeaderMissingBoundary
 	}
 
+	var bodyBytes []byte
 	if r.isBase64Encoded {
 		decoded, err := base64.StdEncoding.DecodeString(r.body)
 		if err != nil {
 			return nil, err
 		}
-		return multipart.NewReader(bytes.NewReader(decoded), boundary), nil
+		bodyBytes = decoded
+	} else {
+		bodyBytes = []byte(r.body)
 	}
 
-	return multipart.NewReader(strings.NewReader(r.body), boundary), nil
+	reader := bufio.NewReaderSize(bytes.NewReader(bodyBytes), 64*1024)
+	return multipart.NewReader(reader, boundary), nil
 }
 
 // PathByName gets a path parameter by its name eg. "productID"
