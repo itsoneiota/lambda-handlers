@@ -118,7 +118,7 @@ func (s *RunSuite) TestInterceptors() {
 		URL:    &url.URL{},
 	}
 	New(testHandler, handler.WithInterceptors(
-		func(w handler.ResponseWriter) error {
+		func(_ context.Context, w handler.ResponseWriter) error {
 			m := &metasyntactic{}
 			err := json.Unmarshal([]byte(w.Body()), m)
 			s.NoError(err)
@@ -159,7 +159,7 @@ func (s *RunSuite) TestInterceptorsHeaders() {
 		URL:    &url.URL{},
 	}
 	New(testHandler, handler.WithInterceptors(
-		func(w handler.ResponseWriter) error {
+		func(_ context.Context, w handler.ResponseWriter) error {
 			w.Header().Add("foo", "bar")
 
 			return nil

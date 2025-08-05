@@ -69,7 +69,7 @@ func handle(h *Handler) LambdaCallback {
 		}
 
 		for _, interceptor := range h.Interceptors() {
-			if err := interceptor(resp); err != nil {
+			if err := interceptor(req.Context(), resp); err != nil {
 				return errorResponse(resp, serviceerror.NewFromErr(err, ""))
 			}
 		}

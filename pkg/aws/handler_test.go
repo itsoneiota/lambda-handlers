@@ -158,7 +158,7 @@ func (s *HandlerSuite) TestMiddlewareError() {
 func (s *HandlerSuite) TestInterceptors() {
 	b := &handler.BaseOpt{}
 	b.SetInterceptors([]handler.Interceptor{
-		func(w handler.ResponseWriter) error {
+		func(_ context.Context, w handler.ResponseWriter) error {
 			m := &metasyntactic{}
 			err := json.Unmarshal([]byte(w.Body()), m)
 			s.NoError(err)
@@ -187,7 +187,7 @@ func (s *HandlerSuite) TestInterceptors() {
 func (s *HandlerSuite) TestInterceptorsHeaders() {
 	b := &handler.BaseOpt{}
 	b.SetInterceptors([]handler.Interceptor{
-		func(w handler.ResponseWriter) error {
+		func(_ context.Context, w handler.ResponseWriter) error {
 			w.Header().Add("foo", "bar")
 
 			return nil
@@ -207,7 +207,7 @@ func (s *HandlerSuite) TestInterceptorsHeaders() {
 func (s *HandlerSuite) TestInterceptorError() {
 	b := &handler.BaseOpt{}
 	b.SetInterceptors([]handler.Interceptor{
-		func(_ handler.ResponseWriter) error {
+		func(_ context.Context, _ handler.ResponseWriter) error {
 			return serviceerror.BadRequest("something bad has happened")
 		},
 	})

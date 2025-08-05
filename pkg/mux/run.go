@@ -29,7 +29,7 @@ func (h *Handler) Run() func(http.ResponseWriter, *http.Request) {
 		}
 
 		for _, interceptor := range h.Interceptors() {
-			if err := interceptor(resp); err != nil {
+			if err := interceptor(r.Context(), resp); err != nil {
 				errorResponse(w, serviceerror.NewFromErr(err, ""))
 				return
 			}
