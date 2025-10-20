@@ -66,6 +66,11 @@ func (r *AWSRequest) Body() string {
 	return r.body
 }
 
+// SetBody sets the request body
+func (r *AWSRequest) SetBody(body string) {
+	r.body = body
+}
+
 // Headers get the request headers
 func (r *AWSRequest) Headers() http.Header {
 	return r.headers

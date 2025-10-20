@@ -39,6 +39,11 @@ func (r *Request) Body() string {
 	return buf.String()
 }
 
+// SetBody sets the request body
+func (r *Request) SetBody(body string) {
+	r.request.Body = http.NoBody
+}
+
 // HeaderByName gets a header by its name eg. "content-type"
 func (r *Request) Headers() http.Header {
 	return r.request.Header

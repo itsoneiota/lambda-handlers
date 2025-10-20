@@ -20,6 +20,8 @@ func (c Request) Body() string {
 	return ""
 }
 
+func (c Request) SetBody(string) {}
+
 func (c Request) GetAuthToken() string {
 	return ""
 }
