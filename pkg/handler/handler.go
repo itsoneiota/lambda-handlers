@@ -11,6 +11,7 @@ type Requester interface {
 	Path() string
 	Method() string
 	Body() string
+	SetBody(string)
 	GetAuthToken() string
 	Headers() http.Header
 	MultipartReader() (*multipart.Reader, error)
