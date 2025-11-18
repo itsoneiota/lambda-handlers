@@ -158,7 +158,7 @@ func (s *HandlerSuite) TestMiddlewareError() {
 func (s *HandlerSuite) TestInterceptors() {
 	b := &handler.BaseOpt{}
 	b.SetInterceptors([]handler.Interceptor{
-		func(_ context.Context, w handler.ResponseWriter) error {
+		func(_ *http.Request, w handler.ResponseWriter) error {
 			m := &metasyntactic{}
 			err := json.Unmarshal([]byte(w.Body()), m)
 			s.NoError(err)
@@ -184,10 +184,42 @@ func (s *HandlerSuite) TestInterceptors() {
 	s.JSONEq(`{"foo":"1","bar":"4","baz":""}`, resp.Body)
 }
 
+func (s *HandlerSuite) TestInterceptorsRequest() {
+	b := &handler.BaseOpt{}
+	b.SetInterceptors([]handler.Interceptor{
+		func(req *http.Request, w handler.ResponseWriter) error {
+			m := &metasyntactic{}
+			err := json.Unmarshal([]byte(w.Body()), m)
+			s.NoError(err)
+
+			query, err := url.ParseQuery(req.URL.RawQuery)
+			s.NoError(err)
+
+			m.Bar = query.Get("bar")
+
+			b, err := json.Marshal(m)
+			s.NoError(err)
+
+			w.Write(b)
+
+			return nil
+		},
+	})
+
+	resp, err := handle(&Handler{
+		function: s.handler,
+		BaseOpt:  b,
+	})(s.req)
+	s.NoError(err)
+
+	s.Equal(http.StatusOK, resp.StatusCode)
+	s.JSONEq(`{"foo":"1","bar":"2","baz":""}`, resp.Body)
+}
+
 func (s *HandlerSuite) TestInterceptorsHeaders() {
 	b := &handler.BaseOpt{}
 	b.SetInterceptors([]handler.Interceptor{
-		func(_ context.Context, w handler.ResponseWriter) error {
+		func(_ *http.Request, w handler.ResponseWriter) error {
 			w.Header().Add("foo", "bar")
 
 			return nil
@@ -207,7 +239,7 @@ func (s *HandlerSuite) TestInterceptorsHeaders() {
 func (s *HandlerSuite) TestInterceptorError() {
 	b := &handler.BaseOpt{}
 	b.SetInterceptors([]handler.Interceptor{
-		func(_ context.Context, _ handler.ResponseWriter) error {
+		func(_ *http.Request, _ handler.ResponseWriter) error {
 			return serviceerror.BadRequest("something bad has happened")
 		},
 	})

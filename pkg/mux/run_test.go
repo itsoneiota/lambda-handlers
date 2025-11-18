@@ -118,7 +118,7 @@ func (s *RunSuite) TestInterceptors() {
 		URL:    &url.URL{},
 	}
 	New(testHandler, handler.WithInterceptors(
-		func(_ context.Context, w handler.ResponseWriter) error {
+		func(_ *http.Request, w handler.ResponseWriter) error {
 			m := &metasyntactic{}
 			err := json.Unmarshal([]byte(w.Body()), m)
 			s.NoError(err)
@@ -136,6 +136,52 @@ func (s *RunSuite) TestInterceptors() {
 
 	s.Equal(http.StatusOK, resp.statusCode)
 	s.Equal(`{"foo":"foo","bar":"4","baz":""}`, string(resp.body))
+}
+
+func (s *RunSuite) TestInterceptorsRequest() {
+	testHandler := func(w http.ResponseWriter, r *http.Request) {
+		m := &metasyntactic{
+			Foo: "foo",
+		}
+
+		b, err := json.Marshal(m)
+		s.NoError(err)
+
+		w.Write(b)
+		w.WriteHeader(http.StatusOK)
+	}
+
+	resp := &fakeResponseWriter{
+		headers: http.Header{},
+	}
+	req := &http.Request{
+		Method: http.MethodGet,
+		URL: &url.URL{
+			RawQuery: "bar=2",
+		},
+	}
+	New(testHandler, handler.WithInterceptors(
+		func(req *http.Request, w handler.ResponseWriter) error {
+			m := &metasyntactic{}
+			err := json.Unmarshal([]byte(w.Body()), m)
+			s.NoError(err)
+
+			query, err := url.ParseQuery(req.URL.RawQuery)
+			s.NoError(err)
+
+			m.Bar = query.Get("bar")
+
+			b, err := json.Marshal(m)
+			s.NoError(err)
+
+			w.Write(b)
+
+			return nil
+		},
+	)).Run()(resp, req)
+
+	s.Equal(http.StatusOK, resp.statusCode)
+	s.Equal(`{"foo":"foo","bar":"2","baz":""}`, string(resp.body))
 }
 
 func (s *RunSuite) TestInterceptorsHeaders() {
@@ -159,7 +205,7 @@ func (s *RunSuite) TestInterceptorsHeaders() {
 		URL:    &url.URL{},
 	}
 	New(testHandler, handler.WithInterceptors(
-		func(_ context.Context, w handler.ResponseWriter) error {
+		func(_ *http.Request, w handler.ResponseWriter) error {
 			w.Header().Add("foo", "bar")
 
 			return nil
