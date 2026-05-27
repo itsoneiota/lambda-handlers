@@ -17,8 +17,6 @@ func (h *Handler) Run() func(http.ResponseWriter, *http.Request) {
 			var err error
 			r, err = middleware(r)
 			if err != nil {
-				resp.SetHttpResponseWriter()
-
 				errorResponse(w, serviceerror.NewFromErr(err, ""))
 				return
 			}
@@ -27,13 +25,13 @@ func (h *Handler) Run() func(http.ResponseWriter, *http.Request) {
 		h.function(resp, r)
 
 		if !helpers.IsOkRange(resp.StatusCode()) {
+			resp.SetHttpResponseWriter()
+
 			return
 		}
 
 		for _, interceptor := range h.Interceptors() {
 			if err := interceptor(r, resp); err != nil {
-				resp.SetHttpResponseWriter()
-
 				errorResponse(w, serviceerror.NewFromErr(err, ""))
 				return
 			}
