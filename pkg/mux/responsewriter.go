@@ -1,18 +1,14 @@
 package mux
 
 import (
-	"encoding/json"
-	"log/slog"
+	"bytes"
 	"net/http"
-
-	"github.com/itsoneiota/lambda-handlers/v2/pkg/helpers"
-	"github.com/itsoneiota/lambda-handlers/v2/pkg/serviceerror"
 )
 
 type ResponseWriter struct {
 	http.ResponseWriter
 	statusCode int
-	body       string
+	body       bytes.Buffer
 }
 
 func NewResponseWriter(w http.ResponseWriter, headers http.Header) *ResponseWriter {
@@ -24,6 +20,7 @@ func NewResponseWriter(w http.ResponseWriter, headers http.Header) *ResponseWrit
 
 	return &ResponseWriter{
 		ResponseWriter: w,
+		statusCode:     http.StatusOK,
 	}
 }
 
@@ -31,44 +28,32 @@ func (w *ResponseWriter) Header() http.Header {
 	return w.ResponseWriter.Header()
 }
 
-func (w *ResponseWriter) Write(body []byte) (int, error) {
-	bodyStr := string(body)
-	if !helpers.IsOkRange(w.statusCode) && !helpers.IsValidJSONObject(bodyStr) {
-		var decodedString string
-		if err := json.Unmarshal([]byte(bodyStr), &decodedString); err == nil {
-			bodyStr = decodedString
-		}
+func (w *ResponseWriter) Write(b []byte) (int, error) {
+	w.body.Reset()
 
-		e := serviceerror.NewServiceError(
-			serviceerror.GetServiceErrorCode(w.statusCode),
-			serviceerror.GetServiceErrorCode(w.statusCode),
-			bodyStr,
-		)
-
-		b, err := json.Marshal(e)
-		if err != nil {
-			slog.Error(err.Error())
-			return 0, err
-		}
-
-		bodyStr = string(b)
-	}
-
-	w.body = bodyStr
-	w.ResponseWriter.Write([]byte(bodyStr))
-
-	return len(body), nil
+	return w.body.Write(b)
 }
 
 func (w *ResponseWriter) WriteHeader(statusCode int) {
-	w.ResponseWriter.WriteHeader(statusCode)
 	w.statusCode = statusCode
 }
 
 func (w *ResponseWriter) Body() string {
-	return w.body
+	return w.body.String()
+}
+
+func (w *ResponseWriter) SetBody(b []byte) {
+	w.body.Reset()
+	w.body.Write(b)
 }
 
 func (w *ResponseWriter) StatusCode() int {
 	return w.statusCode
+}
+
+func (w *ResponseWriter) SetHttpResponseWriter() error {
+	w.ResponseWriter.WriteHeader(w.statusCode)
+
+	_, err := w.ResponseWriter.Write(w.body.Bytes())
+	return err
 }

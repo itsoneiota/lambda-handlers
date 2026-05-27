@@ -35,6 +35,8 @@ func (h *Handler) Run() func(http.ResponseWriter, *http.Request) {
 			}
 		}
 
+		resp.SetHttpResponseWriter()
+
 		return
 	}
 }

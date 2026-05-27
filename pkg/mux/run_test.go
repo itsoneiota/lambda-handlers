@@ -206,6 +206,14 @@ func (s *RunSuite) TestInterceptorsHeaders() {
 	}
 	New(testHandler, handler.WithInterceptors(
 		func(_ *http.Request, w handler.ResponseWriter) error {
+			m := &metasyntactic{
+				Foo: "bar",
+			}
+
+			b, err := json.Marshal(m)
+			s.NoError(err)
+
+			w.Write(b)
 			w.Header().Add("foo", "bar")
 
 			return nil
