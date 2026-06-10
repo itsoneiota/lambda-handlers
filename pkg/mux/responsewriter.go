@@ -2,7 +2,12 @@ package mux
 
 import (
 	"bytes"
+	"encoding/json"
+	"log/slog"
 	"net/http"
+
+	"github.com/itsoneiota/lambda-handlers/v2/pkg/helpers"
+	"github.com/itsoneiota/lambda-handlers/v2/pkg/serviceerror"
 )
 
 type ResponseWriter struct {
@@ -28,10 +33,37 @@ func (w *ResponseWriter) Header() http.Header {
 	return w.ResponseWriter.Header()
 }
 
-func (w *ResponseWriter) Write(b []byte) (int, error) {
+func (w *ResponseWriter) Write(body []byte) (int, error) {
 	w.body.Reset()
+	bodyStr := string(body)
+	if !helpers.IsOkRange(w.StatusCode()) && !helpers.IsValidJSONObject(bodyStr) {
+		var decodedString string
+		if err := json.Unmarshal([]byte(bodyStr), &decodedString); err == nil {
+			bodyStr = decodedString
+		}
 
-	return w.body.Write(b)
+		e := serviceerror.NewServiceError(
+			serviceerror.GetServiceErrorCode(w.StatusCode()),
+			serviceerror.GetServiceErrorCode(w.StatusCode()),
+			bodyStr,
+		)
+
+		b, err := json.Marshal(e)
+		if err != nil {
+			slog.Error(err.Error())
+			return 0, err
+		}
+
+		bodyStr = string(b)
+	} else if !helpers.IsValidJSONObject(bodyStr) {
+		var decodedString string
+		err := json.Unmarshal([]byte(bodyStr), &decodedString)
+		if err == nil {
+			bodyStr = decodedString
+		}
+	}
+
+	return w.body.Write([]byte(bodyStr))
 }
 
 func (w *ResponseWriter) WriteHeader(statusCode int) {
